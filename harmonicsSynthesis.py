@@ -311,19 +311,19 @@ class harmonicsSynthesis(object):
         plt.colorbar(specPlt, cax = ax_cbar)
         ax_cbar.set_title('dB')
 
-filename1 = '../daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section.wav'
-test1 = harmonicsSynthesis(filename1)
-test1.spectrogram()
-test1.getMelody()
-
-fig = plt.figure(0)
-test1.plotSpectrogram(fig = fig)
-
-#test1.saveMelody()
-test1.synthesis()
-
-fig = plt.figure(1)
-test1.plotSpectrogram(fig, 'harmonics')
-
-plt.show()
+# filename1 = '../daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section.wav'
+# test1 = harmonicsSynthesis(filename1)
+# test1.spectrogram()
+# test1.getMelody()
+# 
+# fig = plt.figure(0)
+# test1.plotSpectrogram(fig = fig)
+# 
+# #test1.saveMelody()
+# test1.synthesis()
+# 
+# fig = plt.figure(1)
+# test1.plotSpectrogram(fig, 'harmonics')
+# 
+# plt.show()
 

@@ -7,7 +7,7 @@ go into this folder in your terminal,
 run demo.py
 
 ## modules required
-numpy
-scipy
-matplotlib
+numpy  
+scipy  
+matplotlib  
 essentia

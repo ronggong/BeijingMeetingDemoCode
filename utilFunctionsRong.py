@@ -71,3 +71,10 @@ def hz2cents(hz, tuning):
         cents = -1.0e+04
     return cents
     
+def autolabelBar(rects, ax):
+    # attach some text labels
+    for rect in rects:
+        height = rect.get_height()
+        ax.text(rect.get_x()+rect.get_width()/2., 1.05*height, '%.2f'%float(height),
+                ha='center', va='bottom')
+    

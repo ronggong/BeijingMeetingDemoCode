@@ -150,7 +150,7 @@ class FeaturesExtractionSyllable(FeaturesExtraction):
         #return a dictionary
         return (syllableMean, syllableStd)
     
-    def plotFeatureSyllable(self):
+    def plotFeatureSyllable(self, ax = None):
         if len(self.syllableMean) == 0:
             print 'Please run meanStdSyllable function firstly, then do the plot.'
         
@@ -172,6 +172,8 @@ class FeaturesExtractionSyllable(FeaturesExtraction):
         plt.title(title)
         plt.ylabel(ylabel)
         plt.xticks(ind+width/2.0, self.syllableMrk[3])
+        if ax != None:
+            UFR.autolabelBar(barGraph, ax)
         plt.legend((self.syllableMrk[0],))
         
 def compareFeaturesSyllableMean(filename1, syllableFilename1, filename2, syllableFilename2, feature = 'speccentroid'):
@@ -230,7 +232,7 @@ def plotFeaturesCompare(sylMean1, sylStd1, legendObj1, sylMean2, sylStd2, legend
     elif feature == availableFeatures[2]:
         ylabel = 'Flux'
     
-    plt.figure()
+    fig, ax = plt.subplots()
     syllableNum = len(sylMean1)
     ind = np.arange(syllableNum)
     width = 0.35
@@ -245,6 +247,9 @@ def plotFeaturesCompare(sylMean1, sylStd1, legendObj1, sylMean2, sylStd2, legend
     plt.ylabel(ylabel)
     plt.xticks(ind+width, xticklabels)
     plt.legend((legendObj1, legendObj2))
+    
+    UFR.autolabelBar(bar1, ax)
+    UFR.autolabelBar(bar2, ax)
     plt.show()
     
 def writeCSV(sylMean1, sylStd1, legendObj1, sylMean2, sylStd2, legendObj2, xticklabelsObj, outputFilename = None):

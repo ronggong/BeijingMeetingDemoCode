@@ -101,8 +101,8 @@ test2.extractFeature('speccentroid')
 test2.meanStdSyllable()
 
 # plot
-plt.figure(0)
-test2.plotFeatureSyllable()
+fig, ax = plt.subplots()
+test2.plotFeatureSyllable(ax)
 
 plt.show()
 

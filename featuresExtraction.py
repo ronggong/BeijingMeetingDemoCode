@@ -34,6 +34,12 @@ class FeaturesExtraction(object):
         self.mX = []	# the spectrogram
         self.featureVec = []
     
+    def getAudio(self):
+        return self.audio
+        
+    def getFs(self):
+        return self.fs
+        
     def getFeatures(self):
         return self.features
         
@@ -72,9 +78,12 @@ class FeaturesExtraction(object):
             featureObject = ess.Loudness()
         elif feature == self.features[2]:
             featureObject = ess.Flux()
-            
-        for s in self.mX:
-            out.append(featureObject(s))
+        
+        print 'extracting feature: ', feature
+        
+        for s in self.mX:               
+			out.append(featureObject(s))
+                
         self.featureVec = out
         print feature + ' calculation done, return ' + str(len(self.featureVec)) + ' values.\n'
         return self.featureVec
@@ -83,8 +92,8 @@ class FeaturesExtraction(object):
         if len(self.featureVec) == 0:
             print 'Please run extractFeature(feature) function firstly, then plot feature.'
             return
-        
-        yLabel = None
+            
+        xlabel = 'Time (s)'
         if self.feature == self.features[0]: 
             ylabel = 'Frequency (Hz)'
         elif self.feature == self.features[1]:
@@ -96,13 +105,12 @@ class FeaturesExtraction(object):
         timeStamps = np.arange(featureVec.size)*self.hopSize/float(self.fs)                             
         plt.plot(timeStamps,featureVec)
         title = self.feature + ' mean: ' + '%.2f'%round(np.mean(featureVec),2) \
-        + ' std: ' + '%.2f'%round(np.std(featureVec),2)
+                + ' std: ' + '%.2f'%round(np.std(featureVec),2)
         
         plt.title(title)
-        plt.xlabel('Time (s)')
+        plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.autoscale(tight=True)
-        
 
 class FeaturesExtractionSyllable(FeaturesExtraction):
     '''syllable level feature extraction'''
@@ -118,6 +126,11 @@ class FeaturesExtractionSyllable(FeaturesExtraction):
     
     def getXticklabels(self):
         return self.syllableMrk[3]
+        
+    def getStartTime(self):
+        return self.syllableMrk[1]
+    def getEndTime(self):
+        return self.syllableMrk[2]
     
     def meanStdSyllable(self):
         if len(self.featureVec) == 0:
@@ -288,6 +301,64 @@ def writeCSV(sylMean1, sylStd1, legendObj1, sylMean2, sylStd2, legendObj2, xtick
     
     print 'result is wrote into: ', outputFilename, '\n'
     
+def compareLPCSyllable(filename1, syllableFilename1, filename2, syllableFilename2):
+    obj1 = FeaturesExtractionSyllable(filename1, syllableFilename1)
+    fs = obj1.getFs()
+    audio1 = obj1.getAudio()
+    startTime1 =  obj1.getStartTime()
+    endTime1 = obj1.getEndTime()
+    legendObj1 = obj1.getLegend()
+    xticklabelsObj1 = obj1.getXticklabels()
+    
+    obj2 = FeaturesExtractionSyllable(filename2, syllableFilename2)
+    audio2 = obj2.getAudio()
+    startTime2 =  obj2.getStartTime()
+    endTime2 = obj2.getEndTime()
+    legendObj2 = obj2.getLegend()
+    xticklabelsObj2 = obj2.getXticklabels()
+    
+    if len(startTime1) != len(startTime2):
+        print 'two syllable markers files contain different syllable number, \
+        please make sure the their syllable number be the same.'
+        return
+    elif len(startTime1) == 0:
+        print 'file doesn''t contain any syllable, please check audio file or syllable marker file.'
+        return
+    elif collections.Counter(xticklabelsObj1) != collections.Counter(xticklabelsObj2):
+        print 'two syllable files doesn''t contain the same syllable list, please check syllable file.'
+        return
+    else:
+        npts = 512
+        for mrk in range(len(startTime1)):
+            startSample1 = int(startTime1[mrk]*fs)
+            endSample1 = int(endTime1[mrk]*fs)
+            sylAudio1 = audio1[startSample1:endSample1]
+            syl1 = xticklabelsObj1[mrk]
+            
+            startSample2 = int(startTime2[mrk]*fs)
+            endSample2 = int(endTime2[mrk]*fs)
+            sylAudio2 = audio2[startSample2:endSample2]
+            syl2 = xticklabelsObj2[mrk]
+            
+            frequencyResponse1 = UFR.lpcEnvelope(sylAudio1, npts)
+            mY1 = 20*np.log10(abs(frequencyResponse1))
+            frequencyResponse2 = UFR.lpcEnvelope(sylAudio2, npts)
+            mY2 = 20*np.log10(abs(frequencyResponse2))
+            
+            plotLPCCompare(mY1, legendObj1, mY2, legendObj2, syl1, npts, fs)
+        plt.show()
+            
+def plotLPCCompare(mY1, legendObj1, mY2, legendObj2, syl, npts, fs):
+    fig, ax = plt.subplots()
+    plt.plot(np.arange(0, fs/2.0, fs/float(npts)), -mY1, 'k')
+    plt.plot(np.arange(0, fs/2.0, fs/float(npts)), -mY2, 'r')
+    plt.title('LPC envelope, syllable: ' + syl)
+    plt.xlabel('Frequency (Hz)')
+    plt.ylabel('Magnitude (dB)')
+    plt.autoscale(tight=True)
+    plt.legend((legendObj1, legendObj2))
+
+
 # filename1 = '../daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section.wav'
 # syllableFilename1 = '../daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section-words-mrkRearrange.txt'
 # filename2 = '../daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section.wav'

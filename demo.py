@@ -32,8 +32,7 @@ fig = plt.figure(1)
 test1.plotSpectrogram(fig, 'harmonics')
 
 plt.show()
-
-
+ 
 #################################################################
 # 2. -----compare timbre of two singing schools on syllable level
 from featuresExtraction import *
@@ -50,16 +49,31 @@ syllableFilename2 = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section-word
 # feature could be speccentroid or specloudness or specflux
 compareFeaturesSyllableMean(filename1, syllableFilename1, filename2, syllableFilename2, feature = 'speccentroid')
 
-###################################
-#3. -----plot features of an audio
+################################################
+# 3. -----compare LPC envelope on syllable level
 from featuresExtraction import *
 
-filename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section.wav'
+# wav file
+filename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section_harmonics_pitchtrackCorrected.wav'
+
+# syllable markers
+syllableFilename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section-words-mrkRearrange.txt'
+
+filename2 = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section_harmonics_pitchtrackCorrected.wav'
+syllableFilename2 = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section-words-mrkRearrange.txt'
+
+compareLPCSyllable(filename1, syllableFilename1, filename2, syllableFilename2)
+
+###################################
+# 4. -----plot features of an audio
+from featuresExtraction import *
+
+filename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section_harmonics_pitchtrackCorrected.wav'
 
 test1 = FeaturesExtraction(filename1);
 
 # calculate spectrogram
-test1.spectrogram()
+mX = test1.spectrogram()
 
 # calculate spectral centroid
 test1.extractFeature('speccentroid')
@@ -83,7 +97,7 @@ test1.plotFeature()
 plt.show()
 
 ###################################################
-#4. -----plot mean feature value on syllable level
+# 5. -----plot mean feature value on syllable level
 from featuresExtraction import *
 
 filename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section_harmonics_pitchtrackCorrected.wav'

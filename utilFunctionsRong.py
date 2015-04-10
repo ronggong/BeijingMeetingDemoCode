@@ -1,5 +1,8 @@
 import sys
 import numpy as np
+import essentia.standard as ess
+from scipy.signal import freqz
+from scipy.fftpack import fft, ifft, fftshift
 
 def isfloat(value):
   try:
@@ -77,4 +80,11 @@ def autolabelBar(rects, ax):
         height = rect.get_height()
         ax.text(rect.get_x()+rect.get_width()/2., 1.05*height, '%.2f'%float(height),
                 ha='center', va='bottom')
+
+def lpcEnvelope(audioSamples, npts):
+    '''npts is even number'''
+    lpc = ess.LPC(order = 6)
+    lpcCoeffs = lpc(audioSamples)
+    frequencyResponse = fft(lpcCoeffs[0], npts) 
+    return frequencyResponse[:npts/2]
     

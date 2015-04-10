@@ -43,6 +43,7 @@ class FeaturesExtraction(object):
         SPECTRUM = ess.Spectrum(size=N)
         WINDOW = ess.Windowing(type=winAnalysis, zeroPadding=N-self.frameSize) 
         
+        print 'calculating spectrogram ... ...'
         mX = []
         for frame in ess.FrameGenerator(self.audio, frameSize=self.frameSize, hopSize=self.hopSize):
             frame = WINDOW(frame)
@@ -51,7 +52,7 @@ class FeaturesExtraction(object):
             mX.append(mXFrame)
         
         self.mX = mX
-        print "spectrogram calculation done, return " + str(len(self.mX)) + ' frames.'
+        print "spectrogram calculation done, return " + str(len(self.mX)) + ' frames.\n'
         return self.mX
         
     def extractFeature(self, feature):
@@ -75,7 +76,7 @@ class FeaturesExtraction(object):
         for s in self.mX:
             out.append(featureObject(s))
         self.featureVec = out
-        print feature + ' calculation done, return ' + str(len(self.featureVec)) + ' values.'
+        print feature + ' calculation done, return ' + str(len(self.featureVec)) + ' values.\n'
         return self.featureVec
         
     def plotFeature(self):        
@@ -142,7 +143,9 @@ class FeaturesExtractionSyllable(FeaturesExtraction):
         self.syllableMean = syllableMean
         self.syllableStd = syllableStd
         print self.feature + ' syllable level calculation done, return ' \
-        + str(len(self.syllableMean)) + ' values.'
+        + str(len(self.syllableMean)) + ' values.\n'
+        print 'syllable level mean features value: ', syllableMean
+        print 'syllable level std features value: ', syllableStd, '\n'
         
         #return a dictionary
         return (syllableMean, syllableStd)
@@ -214,6 +217,7 @@ def compareFeaturesSyllableMean(filename1, syllableFilename1, filename2, syllabl
         print 'two syllable files doesn''t contain the same syllable list, please check syllable file.'
         return
     else:
+        writeCSV(sylMean1, sylStd1, legendObj1, sylMean2, sylStd2, legendObj2, xticklabelsObj1)
         plotFeaturesCompare(sylMean1, sylStd1, legendObj1, sylMean2, sylStd2, \
         legendObj2, xticklabelsObj1, feature, availableFeatures)
     
@@ -242,6 +246,42 @@ def plotFeaturesCompare(sylMean1, sylStd1, legendObj1, sylMean2, sylStd2, legend
     plt.xticks(ind+width, xticklabels)
     plt.legend((legendObj1, legendObj2))
     plt.show()
+    
+def writeCSV(sylMean1, sylStd1, legendObj1, sylMean2, sylStd2, legendObj2, xticklabelsObj, outputFilename = None):
+    if outputFilename == None:
+        outputFilename = 'meanStdSyllableResults.csv'
+    
+    if len(sylMean1) == 0 or len(sylMean2) == 0 or len(sylMean1) != len(sylMean2):
+        return
+    
+    # make copy
+    m1 = list(sylMean1)
+    s1 = list(sylStd1)
+    m2 = list(sylMean2)
+    s2 = list(sylStd2)
+    t = list(xticklabelsObj)
+    
+    t.insert(0, '')
+    t.insert(0, '')
+    m1.insert(0, 'Mean')
+    m1.insert(0, legendObj1)
+    s1.insert(0, 'Std')
+    s1.insert(0, '')
+    
+    m2.insert(0, 'Mean')
+    m2.insert(0, legendObj2)
+    s2.insert(0, 'Std')
+    s2.insert(0, '')
+    
+    things2write = [t,m1, s1, m2, s2]
+    
+    length = len(sylMean1)
+    with open(outputFilename, 'wb') as csv_handle:
+        csv_writer = csv.writer(csv_handle, delimiter=' ')
+        for y in range(length):
+            csv_writer.writerow([x[y] for x in things2write])
+    
+    print 'result is wrote into: ', outputFilename, '\n'
     
 # filename1 = '../daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section.wav'
 # syllableFilename1 = '../daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section-words-mrkRearrange.txt'

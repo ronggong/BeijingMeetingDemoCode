@@ -1,5 +1,5 @@
 ##########################################################
-# 1. -----melody extraction, harmonics, residual synthesis
+#1. -----melody extraction, harmonics, residual synthesis
 from harmonicsSynthesis import *
 
 filename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section.wav'
@@ -33,6 +33,7 @@ test1.plotSpectrogram(fig, 'harmonics')
 
 plt.show()
 
+
 #################################################################
 # 2. -----compare timbre of two singing schools on syllable level
 from featuresExtraction import *
@@ -50,7 +51,7 @@ syllableFilename2 = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section-word
 compareFeaturesSyllableMean(filename1, syllableFilename1, filename2, syllableFilename2, feature = 'speccentroid')
 
 ###################################
-# 3. -----plot features of an audio
+#3. -----plot features of an audio
 from featuresExtraction import *
 
 filename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section.wav'
@@ -82,7 +83,7 @@ test1.plotFeature()
 plt.show()
 
 ###################################################
-# 4. -----plot mean feature value on syllable level
+#4. -----plot mean feature value on syllable level
 from featuresExtraction import *
 
 filename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section_harmonics_pitchtrackCorrected.wav'
@@ -104,4 +105,5 @@ plt.figure(0)
 test2.plotFeatureSyllable()
 
 plt.show()
+
 

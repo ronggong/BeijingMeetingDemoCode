@@ -33,15 +33,13 @@ def stdValueRejectZero(vec, startFrameNum, endFrameNum):
     out = vecRejectZero(vec)
     return np.std(out)
 
-def vecRejectZero(vec, vecRef = None):
+def vecRejectZero(vec, vecRef = []):
     out = []
-    if vecRef == None:
+    if len(vecRef) == 0:
         vecRef = vec
     for e in range(len(vecRef)):
         if vecRef[e] != 0:
             out.append(vec[e])
-        else:
-            print vec[e]
     return out
     
 def readSyllableMrk(syllableFilename):

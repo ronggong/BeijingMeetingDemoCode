@@ -1,5 +1,5 @@
 ##########################################################
-#1. -----melody extraction, harmonics, residual synthesis
+# 1. -----melody extraction, harmonics, residual synthesis
 from harmonicsSynthesis import *
 
 filename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section.wav'

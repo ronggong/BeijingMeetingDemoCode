@@ -66,7 +66,7 @@ filename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section_harmonics_pitc
 # syllable markers
 syllableFilename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section-words-mrkRearrange.txt'
 
-# one file
+# one file, xaxis : 'linear' or 'log'
 compareLPCSyllable(filename1, syllableFilename1, xaxis = 'log')
 
 filename2 = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section_harmonics_pitchtrackCorrected.wav'
@@ -76,7 +76,7 @@ syllableFilename2 = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section-word
 filenames = (filename1, filename2)
 syllableFilenames = (syllableFilename1, syllableFilename2)
 
-# xaxis : 'linear' or 'log'
+# compare two files
 compareLPCSyllable(filenames, syllableFilenames, xaxis = 'log')
 
 ################################################
@@ -89,7 +89,7 @@ filename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section_harmonics_pitc
 # syllable markers
 syllableFilename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section-words-mrkRearrange.txt'
 
-# one file
+# one file, xaxis : 'linear' or 'log'
 singerName = ('Li Shengsu', )
 compareLTAS(filename1, singerName = singerName, xaxis = 'log')
 
@@ -101,11 +101,12 @@ filenames = (filename1, filename2)
 syllableFilenames = (syllableFilename1, syllableFilename2)
 
 # compare LTAS on whole file length, ignore the syllableFilenames arguments
-# xaxis : 'linear' or 'log'
 singerName = ('Li Shengsu', 'Chi Xiaoqiu')
 compareLTAS(filenames, singerName = singerName, xaxis = 'log')
 
 # compare LTAS on syllable level once syllable file is available
+# we don't need to give the singerName argument if syllableFilenames is given
+# because syllableFilenames contains singerName in its first line
 compareLTAS(filenames, syllableFilenames, xaxis = 'log')
 
 ###################################

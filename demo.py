@@ -50,7 +50,7 @@ syllableFilename2 = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section-word
 compareFeaturesSyllableMean(filename1, syllableFilename1, filename2, syllableFilename2, feature = 'speccentroid')
 
 ################################################
-# 3. -----compare LPC envelope on syllable level
+# 3. -----compare LPC envelope on syllable level, 2 to 3 files
 from featuresExtraction import *
 
 # wav file
@@ -62,10 +62,40 @@ syllableFilename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section-words-
 filename2 = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section_harmonics_pitchtrackCorrected.wav'
 syllableFilename2 = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section-words-mrkRearrange.txt'
 
-compareLPCSyllable(filename1, syllableFilename1, filename2, syllableFilename2)
+# write these files into a tuple, if we have 3 file to compare, we write filenames = (filename1, filename2, filename3)
+filenames = (filename1, filename2)
+syllableFilenames = (syllableFilename1, syllableFilename2)
+
+# xaxis : 'linear' or 'log'
+compareLPCSyllable(filenames, syllableFilenames, xaxis = 'log')
+
+################################################
+# 4. -----compare LTAS, 2 to 3 files
+from featuresExtraction import *
+
+# wav file
+filename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section_harmonics_pitchtrackCorrected.wav'
+
+# syllable markers
+syllableFilename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section-words-mrkRearrange.txt'
+
+filename2 = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section_harmonics_pitchtrackCorrected.wav'
+syllableFilename2 = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section-words-mrkRearrange.txt'
+
+# write these files into a tuple, if we have 3 file to compare, we write filenames = (filename1, filename2, filename3)
+filenames = (filename1, filename2)
+syllableFilenames = (syllableFilename1, syllableFilename2)
+
+# compare LTAS on whole file length, ignore the syllableFilenames arguments
+# xaxis : 'linear' or 'log'
+singerName = ('Li Shengsu', 'Chi Xiaoqiu')
+compareLTAS(filenames, singerName = singerName, xaxis = 'log')
+
+# compare LTAS on syllable level
+compareLTAS(filenames, syllableFilenames, xaxis = 'log')
 
 ###################################
-# 4. -----plot features of an audio
+# 5. -----plot features of an audio
 from featuresExtraction import *
 
 filename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section_harmonics_pitchtrackCorrected.wav'
@@ -97,7 +127,7 @@ test1.plotFeature()
 plt.show()
 
 ###################################################
-# 5. -----plot mean feature value on syllable level
+# 6. -----plot mean feature value on syllable level
 from featuresExtraction import *
 
 filename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section_harmonics_pitchtrackCorrected.wav'

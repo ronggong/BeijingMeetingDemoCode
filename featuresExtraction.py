@@ -39,6 +39,12 @@ class FeaturesExtraction(object):
         
     def getFs(self):
         return self.fs
+    
+    def getFrameSize(self):
+        return self.frameSize
+    
+    def getHopSize(self):
+        return self.hopSize
         
     def getFeatures(self):
         return self.features
@@ -301,62 +307,192 @@ def writeCSV(sylMean1, sylStd1, legendObj1, sylMean2, sylStd2, legendObj2, xtick
     
     print 'result is wrote into: ', outputFilename, '\n'
     
-def compareLPCSyllable(filename1, syllableFilename1, filename2, syllableFilename2):
-    obj1 = FeaturesExtractionSyllable(filename1, syllableFilename1)
-    fs = obj1.getFs()
-    audio1 = obj1.getAudio()
-    startTime1 =  obj1.getStartTime()
-    endTime1 = obj1.getEndTime()
-    legendObj1 = obj1.getLegend()
-    xticklabelsObj1 = obj1.getXticklabels()
-    
-    obj2 = FeaturesExtractionSyllable(filename2, syllableFilename2)
-    audio2 = obj2.getAudio()
-    startTime2 =  obj2.getStartTime()
-    endTime2 = obj2.getEndTime()
-    legendObj2 = obj2.getLegend()
-    xticklabelsObj2 = obj2.getXticklabels()
-    
-    if len(startTime1) != len(startTime2):
-        print 'two syllable markers files contain different syllable number, \
-        please make sure the their syllable number be the same.'
+def compareLPCSyllable(filenames, syllableFilenames, xaxis = 'linear'):
+    if len(filenames) > 3:
+        print 'we can''t compare more than 3 files right now.'
         return
-    elif len(startTime1) == 0:
-        print 'file doesn''t contain any syllable, please check audio file or syllable marker file.'
-        return
-    elif collections.Counter(xticklabelsObj1) != collections.Counter(xticklabelsObj2):
-        print 'two syllable files doesn''t contain the same syllable list, please check syllable file.'
-        return
-    else:
-        npts = 512
-        for mrk in range(len(startTime1)):
-            startSample1 = int(startTime1[mrk]*fs)
-            endSample1 = int(endTime1[mrk]*fs)
-            sylAudio1 = audio1[startSample1:endSample1]
-            syl1 = xticklabelsObj1[mrk]
+        
+    audios = []
+    startTimes = []
+    endTimes = []
+    legendObjs = []
+    xticklabelsObjs = []
+        
+    for ii in range(len(filenames)):
+        obj = FeaturesExtractionSyllable(filenames[ii], syllableFilenames[ii])
+        frameSize = obj.getFrameSize()
+        hopSize = obj.getHopSize()
+        fs = obj.getFs()
+        audio = obj.getAudio()
+        startTime = obj.getStartTime()
+        endTime = obj.getEndTime()
+        legendObj = obj.getLegend()
+        xticklabelsObj = obj.getXticklabels()
             
-            startSample2 = int(startTime2[mrk]*fs)
-            endSample2 = int(endTime2[mrk]*fs)
-            sylAudio2 = audio2[startSample2:endSample2]
-            syl2 = xticklabelsObj2[mrk]
+        audios.append(audio)
+        startTimes.append(startTime)
+        endTimes.append(endTime)
+        legendObjs.append(legendObj)
+        xticklabelsObjs.append(xticklabelsObj)
             
-            frequencyResponse1 = UFR.lpcEnvelope(sylAudio1, npts)
-            mY1 = 20*np.log10(abs(frequencyResponse1))
-            frequencyResponse2 = UFR.lpcEnvelope(sylAudio2, npts)
-            mY2 = 20*np.log10(abs(frequencyResponse2))
+    if len(filenames) > 1:
+        for ii in range(1, len(filenames)):
+            if len(startTimes[ii]) != len(startTimes[ii-1]):
+                print('two syllable markers files contain different syllable number, ' +
+                'please make sure the their syllable number be the same.')
+                return
+            elif len(startTimes[ii]) == 0:
+                print 'file doesn''t contain any syllable, please check audio file or syllable marker file.'
+                return
+            elif collections.Counter(xticklabelsObjs[ii]) != collections.Counter(xticklabelsObjs[ii-1]):
+                print 'two syllable files doesn''t contain the same syllable list, please check syllable file.'
+                return
+                
+    npts = 512
+    styles = ['b-', 'r--', 'k:']
+    for mrk in range(len(startTime)):
+        fig, ax = plt.subplots()
+        for ii in range(len(filenames)):
+            startTime = startTimes[ii]
+            endTime = endTimes[ii]
+            audio = audios[ii]
+            xticklabelsObj = xticklabelsObjs[ii]
             
-            plotLPCCompare(mY1, legendObj1, mY2, legendObj2, syl1, npts, fs)
-        plt.show()
+            startSample = int(startTime[mrk]*fs)
+            endSample = int(endTime[mrk]*fs)
+            sylAudio = audio[startSample:endSample]
+            syl = xticklabelsObj[mrk]
             
-def plotLPCCompare(mY1, legendObj1, mY2, legendObj2, syl, npts, fs):
-    fig, ax = plt.subplots()
-    plt.plot(np.arange(0, fs/2.0, fs/float(npts)), -mY1, 'k')
-    plt.plot(np.arange(0, fs/2.0, fs/float(npts)), -mY2, 'r')
-    plt.title('LPC envelope, syllable: ' + syl)
+            frequencyResponse = UFR.lpcEnvelope(sylAudio, npts)
+            mY = 20*np.log10(abs(frequencyResponse))
+            
+            style = styles[ii]
+            plotLPCCompare(mY, style, npts, fs, xaxis)
+            
+        plt.title('LPC envelope, syllable: ' + syl)
+        plt.legend(legendObjs)
+    plt.show()
+            
+def plotLPCCompare(mY, style, npts, fs, xaxis):
+    if xaxis != 'linear' and xaxis != 'log':
+        print 'xaxis should one of linear of log. use default xaxis = ''linear'''
+        xaxis = 'linear'
+    if xaxis == 'log':
+        plt.semilogx()   
+        
+    plt.plot(np.arange(0, fs/2.0, fs/float(npts)), -mY, style)
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Magnitude (dB)')
     plt.autoscale(tight=True)
-    plt.legend((legendObj1, legendObj2))
+    plt.grid(True)
+    
+def compareLTAS(filenames, syllableFilenames = None, singerName = None,xaxis = 'linear'):
+    if len(filenames) > 3:
+        print 'we can''t compare more than 3 files right now.'
+        return
+    
+    styles = ['b-', 'r--', 'k:']
+    if syllableFilenames == None:
+        fig, ax = plt.subplots()
+        legend = []
+        singer = 1
+        for f in filenames:
+            obj = FeaturesExtraction(f)
+            frameSize = obj.getFrameSize()
+            fs = obj.getFs()
+            spec = obj.spectrogram()
+            spec = np.array(spec)
+            mean = spec.mean(0)
+            plotLTAS(meanSpec = mean, style = styles[singer - 1], fs = fs, \
+            frameSize = frameSize, xaxis = xaxis)
+            
+            if singerName == None:
+                singerString = 'singer' + str(singer)
+            else:
+                singerString = singerName[singer-1]
+            legend.append(singerString)
+            singer = singer + 1
+            
+        plt.title('LTAS')
+        plt.legend(legend)
+        plt.show()
+    else:
+        spectro = []
+        frameLens = []
+        startTimes = []
+        endTimes = []
+        legendObjs = []
+        xticklabelsObjs = []
+        
+        for ii in range(len(filenames)):
+            obj = FeaturesExtractionSyllable(filenames[ii], syllableFilenames[ii])
+            frameSize = obj.getFrameSize()
+            hopSize = obj.getHopSize()
+            fs = obj.getFs()
+            spec = obj.spectrogram()
+            spec = np.array(spec)
+            startTime = obj.getStartTime()
+            endTime = obj.getEndTime()
+            legendObj = obj.getLegend()
+            xticklabelsObj = obj.getXticklabels()
+            
+            spectro.append(spec)
+            frameLens.append(len(spec))
+            startTimes.append(startTime)
+            endTimes.append(endTime)
+            legendObjs.append(legendObj)
+            xticklabelsObjs.append(xticklabelsObj)
+            
+        if len(filenames) > 1:
+            for ii in range(1, len(filenames)):
+                if len(startTimes[ii]) != len(startTimes[ii-1]):
+                    print('two syllable markers files contain different syllable number, ' +
+                    'please make sure the their syllable number be the same.')
+                    return
+                elif len(startTimes[ii]) == 0:
+                    print 'file doesn''t contain any syllable, please check audio file or syllable marker file.'
+                    return
+                elif collections.Counter(xticklabelsObjs[ii]) != collections.Counter(xticklabelsObjs[ii-1]):
+                    print 'two syllable files doesn''t contain the same syllable list, please check syllable file.'
+                    return
+
+        for mrkNum in range(len(startTime)):
+            fig = plt.subplots()
+            for ii in range(len(filenames)):
+                startTime = startTimes[ii]
+                endTime = endTimes[ii]
+                #legendObj = legendObjs[ii]
+                xticklabelsObj = xticklabelsObjs[ii]
+                
+                syllable = xticklabelsObj[mrkNum]
+                tStart = startTime[mrkNum]
+                tEnd = endTime[mrkNum]
+                fStart = UFR.findMinDisFrameNum(tStart, frameLens[ii], hopSize, fs)
+                fEnd = UFR.findMinDisFrameNum(tEnd, frameLens[ii], hopSize, fs)
+            
+                meanSpec = spectro[ii][fStart:fEnd].mean(0)
+                #std = UFR.stdValueRejectZero(self.featureVec, fStart, fEnd)
+                
+                style = styles[ii]
+                plotLTAS(meanSpec, style, fs, frameSize, xaxis)
+                plt.title('LTAS, syllable: ' + xticklabelsObj[mrkNum])
+                plt.legend(legendObjs)
+        plt.show()
+        
+            
+def plotLTAS(meanSpec, style, fs, frameSize, xaxis):
+    freqBins = np.arange(meanSpec.shape[0])*(fs/float(frameSize)/2)
+    meanSpec = plt.plot(freqBins, 20 * np.log10(meanSpec), style)        
+    if xaxis != 'linear' and xaxis != 'log':
+        print 'xaxis should one of linear of log. use default xaxis = ''linear'''
+        xaxis = 'linear'
+    if xaxis == 'log':
+        plt.semilogx()   
+        
+    plt.xlabel('Frequency (Hz)')
+    plt.ylabel('Amplitude (dB)')
+    plt.xlim(0, 10000)
+    plt.grid(True)      
 
 
 # filename1 = '../daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section.wav'
@@ -404,6 +540,3 @@ def plotLPCCompare(mY1, legendObj1, mY2, legendObj2, syl, npts, fs):
 # plt.figure(1)
 # test2.plotFeatureSyllable()
 # plt.show()
-
-
-        

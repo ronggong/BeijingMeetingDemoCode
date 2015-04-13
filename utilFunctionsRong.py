@@ -24,20 +24,25 @@ def findMinDisFrameNum(t, vec_len, hop, fs):
 def meanValueRejectZero(vec, startFrameNum, endFrameNum):
     '''vector is a list'''
     vec = vec[startFrameNum:endFrameNum]
-    out = []
-    for e in vec:
-        if e != 0:
-            out.append(e)
+    out = vecRejectZero(vec)
     return np.mean(out)
     
 def stdValueRejectZero(vec, startFrameNum, endFrameNum):
     '''vector is a list'''
     vec = vec[startFrameNum:endFrameNum]
-    out = []
-    for e in vec:
-        if e != 0:
-            out.append(e)
+    out = vecRejectZero(vec)
     return np.std(out)
+
+def vecRejectZero(vec, vecRef = None):
+    out = []
+    if vecRef == None:
+        vecRef = vec
+    for e in range(len(vecRef)):
+        if vecRef[e] != 0:
+            out.append(vec[e])
+        else:
+            print vec[e]
+    return out
     
 def readSyllableMrk(syllableFilename):
     '''read syllable marker file'''

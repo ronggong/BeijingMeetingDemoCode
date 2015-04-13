@@ -88,7 +88,7 @@ class FeaturesExtraction(object):
         print 'extracting feature: ', feature
         
         for s in self.mX:               
-			out.append(featureObject(s))
+            out.append(featureObject(s))
                 
         self.featureVec = out
         print feature + ' calculation done, return ' + str(len(self.featureVec)) + ' values.\n'
@@ -195,54 +195,66 @@ class FeaturesExtractionSyllable(FeaturesExtraction):
             UFR.autolabelBar(barGraph, ax)
         plt.legend((self.syllableMrk[0],))
         
-def compareFeaturesSyllableMean(filename1, syllableFilename1, filename2, syllableFilename2, feature = 'speccentroid'):
-    if feature == 'specloudness':
+def compareFeaturesSyllableMean(filenames, syllableFilenames, feature = 'speccentroid'):
+    if type(filenames) == str:
+        filenames = (filenames, )
+        if syllableFilenames != None:
+            syllableFilenames = (syllableFilenames, )
+    
+    if len(filenames) > 3:
+        print 'we can''t compare more than 3 files right now.'
+        return
+        
+    if feature == 'specloudness' and len(filenames) > 1:
         print("Warning: It doesn't make sense to compare loudness if two files are " + 
         "recorded differently. Because the recording environment, the use of recording " +
         "mixing technique (the use of compressor, expander or other dynamic control" + 
         "in music post production) are different.")
         
-    obj1 = FeaturesExtractionSyllable(filename1, syllableFilename1)
-    availableFeatures = obj1.getFeatures()
+    obj = FeaturesExtractionSyllable(filenames[0], syllableFilenames[0])
+    availableFeatures = obj.getFeatures()
     
     if feature not in availableFeatures:
         print 'the argument feature should be one of ', availableFeatures
         return
 
-    obj1.spectrogram()
-    obj1.extractFeature(feature)
-    rdictObj1 = obj1.meanStdSyllable()
-    legendObj1 = obj1.getLegend()
-    xticklabelsObj1 = obj1.getXticklabels()
+    legends = []
+    xticklabelsObjs = []
+    sylMeans = []
+    sylStds = []
+    for ii in range(len(filenames)):
+        obj = FeaturesExtractionSyllable(filenames[ii], syllableFilenames[ii])
+        obj.spectrogram()
+        obj.extractFeature(feature)
+        rdictObj = obj.meanStdSyllable()
+        legendObj = obj.getLegend()
+        xticklabelsObj = obj.getXticklabels()
     
-    obj2 = FeaturesExtractionSyllable(filename2, syllableFilename2)
-    obj2.spectrogram()
-    obj2.extractFeature(feature)
-    rdictObj2 = obj2.meanStdSyllable()
-    legendObj2 = obj2.getLegend()
-    xticklabelsObj2 = obj2.getXticklabels()
+        sylMean = rdictObj[0]
+        sylStd = rdictObj[1]
+        
+        legends.append(legendObj)
+        xticklabelsObjs.append(xticklabelsObj)
+        sylMeans.append(sylMean)
+        sylStds.append(sylStd)
     
-    sylMean1 = rdictObj1[0]
-    sylStd1 = rdictObj1[1]
-    sylMean2 = rdictObj2[0]
-    sylStd2 = rdictObj2[1]
+    if len(filenames) > 1:
+        for ii in range(1, len(filenames)):
+            if len(sylMeans[ii]) != len(sylMeans[ii-1]):
+                print('two syllable markers files contain different syllable number, ' +
+                'please make sure the their syllable number be the same.')
+                return
+            elif len(sylMeans[ii]) == 0:
+                print 'file doesn''t contain any syllable, please check audio file or syllable marker file.'
+                return
+            elif collections.Counter(xticklabelsObjs[ii]) != collections.Counter(xticklabelsObjs[ii-1]):
+                print 'two syllable files doesn''t contain the same syllable list, please check syllable file.'
+                return
+                
+    writeCSV(sylMeans, sylStds, legends, xticklabelsObj)
+    plotFeaturesCompare(sylMeans, sylStds, legends, xticklabelsObj, feature, availableFeatures)
     
-    if len(sylMean1) != len(sylMean2):
-        print 'two syllable markers files contain different syllable number, \
-        please make sure the their syllable number be the same.'
-        return
-    elif len(sylMean1) == 0:
-        print 'file doesn''t contain any syllable, please check audio file or syllable marker file.'
-        return
-    elif collections.Counter(xticklabelsObj1) != collections.Counter(xticklabelsObj2):
-        print 'two syllable files doesn''t contain the same syllable list, please check syllable file.'
-        return
-    else:
-        writeCSV(sylMean1, sylStd1, legendObj1, sylMean2, sylStd2, legendObj2, xticklabelsObj1)
-        plotFeaturesCompare(sylMean1, sylStd1, legendObj1, sylMean2, sylStd2, \
-        legendObj2, xticklabelsObj1, feature, availableFeatures)
-    
-def plotFeaturesCompare(sylMean1, sylStd1, legendObj1, sylMean2, sylStd2, legendObj2, xticklabels,feature, availableFeatures):
+def plotFeaturesCompare(sylMeans, sylStds, legends, xticklabels, feature, availableFeatures):
     yLabel = None
     if feature == availableFeatures[0]: 
         ylabel = 'Frequency (Hz)'
@@ -252,54 +264,48 @@ def plotFeaturesCompare(sylMean1, sylStd1, legendObj1, sylMean2, sylStd2, legend
         ylabel = 'Flux'
     
     fig, ax = plt.subplots()
-    syllableNum = len(sylMean1)
-    ind = np.arange(syllableNum)
+    syllableNum = len(sylMeans[0])
     width = 0.35
-    bar1 = plt.bar(ind, sylMean1, width, color='r', yerr = sylStd1)
-    bar2 = plt.bar(ind+width, sylMean2, width, color='y', yerr = sylStd2)
-    title = feature + ' red bar mean: ' + '%.2f'%round(np.mean(sylMean1),2) + \
-    ' std: ' + '%.2f'%round(np.std(sylMean1),2) + '\n' + \
-    'yellow bar mean: ' + '%.2f'%round(np.mean(sylMean2),2) + \
-    ' std: ' + '%.2f'%round(np.std(sylMean2),2)
+    ind = np.arange(syllableNum) * (width * (len(sylMeans)+1))
+    title = feature
+    colors = ('r', 'y','b')
+    for ii in range(len(sylMeans)):
+        bar = plt.bar(ind + ii*width, sylMeans[ii], width, color=colors[ii], yerr = sylStds[ii])
+        title = title + ' ' + legends[ii] + ' mean: ' + '%.2f'%round(np.mean(sylMeans[ii]),2) + \
+        ' std:' + '%.2f'%round(np.std(sylMeans[ii]),2) + '\n'
+        UFR.autolabelBar(bar, ax)
+        
+    title = title[:-2]
         
     plt.title(title)
     plt.ylabel(ylabel)
-    plt.xticks(ind+width, xticklabels)
-    plt.legend((legendObj1, legendObj2))
-    
-    UFR.autolabelBar(bar1, ax)
-    UFR.autolabelBar(bar2, ax)
+    plt.xticks(ind+(len(sylMeans)/2.0) * width, xticklabels)
+    plt.legend(legends)
+    plt.autoscale(tight=True)
     plt.show()
     
-def writeCSV(sylMean1, sylStd1, legendObj1, sylMean2, sylStd2, legendObj2, xticklabelsObj, outputFilename = None):
+def writeCSV(sylMeans, sylStds, legendObjs, xticklabelsObj, outputFilename = None):
     if outputFilename == None:
         outputFilename = 'meanStdSyllableResults.csv'
     
-    if len(sylMean1) == 0 or len(sylMean2) == 0 or len(sylMean1) != len(sylMean2):
-        return
-    
     # make copy
-    m1 = list(sylMean1)
-    s1 = list(sylStd1)
-    m2 = list(sylMean2)
-    s2 = list(sylStd2)
     t = list(xticklabelsObj)
     
     t.insert(0, '')
     t.insert(0, '')
-    m1.insert(0, 'Mean')
-    m1.insert(0, legendObj1)
-    s1.insert(0, 'Std')
-    s1.insert(0, '')
     
-    m2.insert(0, 'Mean')
-    m2.insert(0, legendObj2)
-    s2.insert(0, 'Std')
-    s2.insert(0, '')
+    things2write = [t,]
+    for ii in range(len(sylMeans)):
+        m = list(sylMeans[ii])
+        s = list(sylStds[ii])
+        m.insert(0, 'Mean')
+        m.insert(0, legendObjs[ii])
+        s.insert(0, 'Std')
+        s.insert(0, '')
+        things2write.append(m)
+        things2write.append(s)
     
-    things2write = [t,m1, s1, m2, s2]
-    
-    length = len(sylMean1)
+    length = len(sylMeans[0])
     with open(outputFilename, 'wb') as csv_handle:
         csv_writer = csv.writer(csv_handle, delimiter=' ')
         for y in range(length):
@@ -308,6 +314,11 @@ def writeCSV(sylMean1, sylStd1, legendObj1, sylMean2, sylStd2, legendObj2, xtick
     print 'result is wrote into: ', outputFilename, '\n'
     
 def compareLPCSyllable(filenames, syllableFilenames, xaxis = 'linear'):
+    if type(filenames) == str:
+        filenames = (filenames, )
+        if syllableFilenames != None:
+            syllableFilenames = (syllableFilenames, )
+    
     if len(filenames) > 3:
         print 'we can''t compare more than 3 files right now.'
         return
@@ -361,6 +372,8 @@ def compareLPCSyllable(filenames, syllableFilenames, xaxis = 'linear'):
             startSample = int(startTime[mrk]*fs)
             endSample = int(endTime[mrk]*fs)
             sylAudio = audio[startSample:endSample]
+            sylAudio = UFR.vecRejectZero(sylAudio)
+            sylAudio = np.array(sylAudio)
             syl = xticklabelsObj[mrk]
             
             frequencyResponse = UFR.lpcEnvelope(sylAudio, npts)
@@ -387,6 +400,11 @@ def plotLPCCompare(mY, style, npts, fs, xaxis):
     plt.grid(True)
     
 def compareLTAS(filenames, syllableFilenames = None, singerName = None,xaxis = 'linear'):
+    if type(filenames) == str:
+        filenames = (filenames, )
+        if syllableFilenames != None:
+            syllableFilenames = (syllableFilenames, )
+    
     if len(filenames) > 3:
         print 'we can''t compare more than 3 files right now.'
         return
@@ -402,14 +420,21 @@ def compareLTAS(filenames, syllableFilenames = None, singerName = None,xaxis = '
             fs = obj.getFs()
             spec = obj.spectrogram()
             spec = np.array(spec)
-            mean = spec.mean(0)
-            plotLTAS(meanSpec = mean, style = styles[singer - 1], fs = fs, \
+            sumSpec = spec.mean(1)
+            spec = UFR.vecRejectZero(spec, sumSpec) # reject zero
+            spec = np.array(spec)
+            meanSpec = spec.mean(0)
+            plotLTAS(meanSpec = meanSpec, style = styles[singer - 1], fs = fs, \
             frameSize = frameSize, xaxis = xaxis)
             
             if singerName == None:
                 singerString = 'singer' + str(singer)
-            else:
+            elif len(singerName) >= len(filenames):
                 singerString = singerName[singer-1]
+            else:
+                print 'singerName contains less singers than the file number.'
+                return
+                
             legend.append(singerString)
             singer = singer + 1
             
@@ -470,7 +495,12 @@ def compareLTAS(filenames, syllableFilenames = None, singerName = None,xaxis = '
                 fStart = UFR.findMinDisFrameNum(tStart, frameLens[ii], hopSize, fs)
                 fEnd = UFR.findMinDisFrameNum(tEnd, frameLens[ii], hopSize, fs)
             
-                meanSpec = spectro[ii][fStart:fEnd].mean(0)
+                sylSpec = spectro[ii][fStart:fEnd]
+                sumSpec = sylSpec.mean(1)
+                sylSpec = UFR.vecRejectZero(sylSpec, sumSpec)
+                sylSpec = np.array(sylSpec)
+                meanSpec = sylSpec.mean(0)
+
                 #std = UFR.stdValueRejectZero(self.featureVec, fStart, fEnd)
                 
                 style = styles[ii]
@@ -491,52 +521,6 @@ def plotLTAS(meanSpec, style, fs, frameSize, xaxis):
         
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Amplitude (dB)')
-    plt.xlim(0, 10000)
+    plt.xlim(0, 20000)
     plt.grid(True)      
 
-
-# filename1 = '../daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section.wav'
-# syllableFilename1 = '../daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section-words-mrkRearrange.txt'
-# filename2 = '../daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section.wav'
-# syllableFilename2 = '../daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section-words-mrkRearrange.txt'
-# 
-# compareFeaturesSyllableMean(filename1, syllableFilename1, filename2, syllableFilename2, feature = 'speccentroid')
-
-# rdict = UFR.readSyllableMrk(syllableFilename1)
-# print rdict[0]
-# print rdict[1]
-# print rdict[2]
-# print rdict[3]
-
-# test1 = FeaturesExtraction(filename = filename);
-# test1.spectrogram()
-# 
-# test1.extractFeature('speccentroid')
-
-# centroid = 0
-# plt.figure(centroid)
-# test1.plotFeature()
-# 
-# test1.extractFeature('specloudness')
-# 
-# loudness = 1
-# plt.figure(loudness)
-# test1.plotFeature()
-# 
-# test1.extractFeature('specflux')
-# flux = 2
-# plt.figure(flux)
-# test1.plotFeature()
-# 
-# plt.show()
-
-# test2 = FeaturesExtractionSyllable(filename1, syllableFilename1)
-# test2.spectrogram()
-# test2.extractFeature('specloudness')
-# test2.meanStdSyllable()
-# plt.figure(0)
-# test2.plotFeature()
-# 
-# plt.figure(1)
-# test2.plotFeatureSyllable()
-# plt.show()

@@ -34,7 +34,7 @@ test1.plotSpectrogram(fig, 'harmonics')
 plt.show()
  
 #################################################################
-# 2. -----compare timbre of two singing schools on syllable level
+# 2. -----compare timbre of singing schools on syllable level, 1 to 3 files
 from featuresExtraction import *
 
 # wav file
@@ -42,15 +42,22 @@ filename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section_harmonics_pitc
 
 # syllable markers
 syllableFilename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section-words-mrkRearrange.txt'
+
+# one file, feature could be speccentroid or specloudness or specflux
+compareFeaturesSyllableMean(filename1, syllableFilename1, feature = 'speccentroid')
 
 filename2 = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section_harmonics_pitchtrackCorrected.wav'
 syllableFilename2 = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section-words-mrkRearrange.txt'
 
-# feature could be speccentroid or specloudness or specflux
-compareFeaturesSyllableMean(filename1, syllableFilename1, filename2, syllableFilename2, feature = 'speccentroid')
+# write these files into a tuple, if we have 3 file to compare, we write filenames = (filename1, filename2, filename3)
+filenames = (filename1, filename2)
+syllableFilenames = (syllableFilename1, syllableFilename2)
+
+# compare 2 files
+compareFeaturesSyllableMean(filenames, syllableFilenames, feature = 'speccentroid')
 
 ################################################
-# 3. -----compare LPC envelope on syllable level, 2 to 3 files
+# 3. -----compare LPC envelope on syllable level, 1 to 3 files
 from featuresExtraction import *
 
 # wav file
@@ -58,6 +65,9 @@ filename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section_harmonics_pitc
 
 # syllable markers
 syllableFilename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section-words-mrkRearrange.txt'
+
+# one file
+compareLPCSyllable(filename1, syllableFilename1, xaxis = 'log')
 
 filename2 = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section_harmonics_pitchtrackCorrected.wav'
 syllableFilename2 = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section-words-mrkRearrange.txt'
@@ -70,7 +80,7 @@ syllableFilenames = (syllableFilename1, syllableFilename2)
 compareLPCSyllable(filenames, syllableFilenames, xaxis = 'log')
 
 ################################################
-# 4. -----compare LTAS, 2 to 3 files
+# 4. -----compare LTAS, 1 to 3 files
 from featuresExtraction import *
 
 # wav file
@@ -79,10 +89,14 @@ filename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section_harmonics_pitc
 # syllable markers
 syllableFilename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section-words-mrkRearrange.txt'
 
+# one file
+singerName = ('Li Shengsu', )
+compareLTAS(filename1, singerName = singerName, xaxis = 'log')
+
 filename2 = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section_harmonics_pitchtrackCorrected.wav'
 syllableFilename2 = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section-words-mrkRearrange.txt'
 
-# write these files into a tuple, if we have 3 file to compare, we write filenames = (filename1, filename2, filename3)
+# write these filenames into a tuple, if we have 3 file to compare, we write filenames = (filename1, filename2, filename3)
 filenames = (filename1, filename2)
 syllableFilenames = (syllableFilename1, syllableFilename2)
 
@@ -91,7 +105,7 @@ syllableFilenames = (syllableFilename1, syllableFilename2)
 singerName = ('Li Shengsu', 'Chi Xiaoqiu')
 compareLTAS(filenames, singerName = singerName, xaxis = 'log')
 
-# compare LTAS on syllable level
+# compare LTAS on syllable level once syllable file is available
 compareLTAS(filenames, syllableFilenames, xaxis = 'log')
 
 ###################################
@@ -123,30 +137,6 @@ test1.extractFeature('specflux')
 
 plt.figure(2)
 test1.plotFeature()
-
-plt.show()
-
-###################################################
-# 6. -----plot mean feature value on syllable level
-from featuresExtraction import *
-
-filename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section_harmonics_pitchtrackCorrected.wav'
-
-syllableFilename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section-words-mrkRearrange.txt'
-
-test2 = FeaturesExtractionSyllable(filename1, syllableFilename1)
-
-test2.spectrogram()
-
-# calculate feature, speccentroid or specloudness or specflux
-test2.extractFeature('speccentroid')
-
-# calculate mean, standard deviation of feature value on syllable level
-test2.meanStdSyllable()
-
-# plot
-fig, ax = plt.subplots()
-test2.plotFeatureSyllable(ax)
 
 plt.show()
 

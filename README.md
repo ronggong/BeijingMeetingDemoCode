@@ -8,6 +8,8 @@ download this folder,
 go into this folder in your terminal,  
 run demo.py
 
+syllable marker file should be utf-8 encoding
+
 ## modules required
 numpy  
 scipy  

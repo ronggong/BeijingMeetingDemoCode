@@ -31,11 +31,15 @@ class FeaturesExtraction(object):
         self.hopSize = hopSize
         self.fs = fs
         self.audio = ess.MonoLoader(filename = filename, sampleRate = fs)()
-        self.mX = []	# the spectrogram
+        self.mX = [] # the spectrogram
+        self.frames = []
         self.featureVec = []
     
     def getAudio(self):
         return self.audio
+    
+    def getFrames(self):
+        return self.frames
         
     def getFs(self):
         return self.fs
@@ -58,6 +62,7 @@ class FeaturesExtraction(object):
         print 'calculating spectrogram ... ...'
         mX = []
         for frame in ess.FrameGenerator(self.audio, frameSize=self.frameSize, hopSize=self.hopSize):
+            self.frames.append(frame)
             frame = WINDOW(frame)
             mXFrame = SPECTRUM(frame)
             #store/append values per frame in an array
@@ -110,8 +115,11 @@ class FeaturesExtraction(object):
         featureVec = np.array(self.featureVec)
         timeStamps = np.arange(featureVec.size)*self.hopSize/float(self.fs)                             
         plt.plot(timeStamps,featureVec)
-        title = self.feature + ' mean: ' + '%.2f'%round(np.mean(featureVec),2) \
-                + ' std: ' + '%.2f'%round(np.std(featureVec),2)
+        meanValue = round(np.mean(featureVec),2)
+        stdValue = round(np.std(featureVec),2)
+        cvValue = meanValue/stdValue
+        title = self.feature + ' mean: ' + '%.2f'%meanValue \
+                + ' coeff of variation: ' + '%.2f'%cvValue
         
         plt.title(title)
         plt.xlabel(xlabel)
@@ -184,9 +192,12 @@ class FeaturesExtractionSyllable(FeaturesExtraction):
         syllableNum = len(self.syllableMean)
         ind = np.arange(syllableNum)
         width = 0.35
+        meanValue = round(np.mean(self.syllableMean),2)
+        stdValue = round(np.std(self.syllableMean),2)
+        cvValue = meanValue/stdValue
         barGraph = plt.bar(ind, self.syllableMean, width, color='r', yerr = self.syllableStd)
-        title = self.feature + ' mean: ' + '%.2f'%round(np.mean(self.syllableMean),2) + \
-        ' std: ' + '%.2f'%round(np.std(self.syllableMean),2)
+        title = self.feature + ' mean: ' + '%.2f'%meanValue + \
+        ' coeff of variation: ' + '%.2f'%cvValue
         
         plt.title(title)
         plt.ylabel(ylabel)
@@ -271,8 +282,11 @@ def plotFeaturesCompare(sylMeans, sylStds, legends, xticklabels, feature, availa
     colors = ('r', 'y','b')
     for ii in range(len(sylMeans)):
         bar = plt.bar(ind + ii*width, sylMeans[ii], width, color=colors[ii], yerr = sylStds[ii])
-        title = title + ' ' + legends[ii] + ' mean: ' + '%.2f'%round(np.mean(sylMeans[ii]),2) + \
-        ' std:' + '%.2f'%round(np.std(sylMeans[ii]),2) + '\n'
+        meanValue = round(np.mean(sylMeans[ii]),2)
+        stdValue = round(np.std(sylMeans[ii]),2)
+        cvValue = meanValue/stdValue
+        title = title + ' ' + legends[ii] + ' mean: ' + '%.2f'%meanValue + \
+        ' coeff of variation:' + '%.2f'%cvValue + '\n'
         UFR.autolabelBar(bar, ax)
         
     title = title[:-2]
@@ -305,11 +319,11 @@ def writeCSV(sylMeans, sylStds, legendObjs, xticklabelsObj, outputFilename = Non
         things2write.append(m)
         things2write.append(s)
     
-    length = len(sylMeans[0])
-    with open(outputFilename, 'wb') as csv_handle:
-        csv_writer = csv.writer(csv_handle, delimiter=' ')
-        for y in range(length):
-            csv_writer.writerow([x[y] for x in things2write])
+    length = len(m)
+    f = open(outputFilename, 'w')
+    csv_writer = UFR.UnicodeWriter(f)
+    for y in range(length):
+        csv_writer.writerow([x[y] for x in things2write])
     
     print 'result is wrote into: ', outputFilename, '\n'
     
@@ -324,6 +338,7 @@ def compareLPCSyllable(filenames, syllableFilenames, xaxis = 'linear'):
         return
         
     audios = []
+#     frames = []
     startTimes = []
     endTimes = []
     legendObjs = []
@@ -331,16 +346,19 @@ def compareLPCSyllable(filenames, syllableFilenames, xaxis = 'linear'):
         
     for ii in range(len(filenames)):
         obj = FeaturesExtractionSyllable(filenames[ii], syllableFilenames[ii])
+#         obj.spectrogram() # to get frame
         frameSize = obj.getFrameSize()
         hopSize = obj.getHopSize()
         fs = obj.getFs()
         audio = obj.getAudio()
+        frame = obj.getFrames()
         startTime = obj.getStartTime()
         endTime = obj.getEndTime()
         legendObj = obj.getLegend()
         xticklabelsObj = obj.getXticklabels()
             
         audios.append(audio)
+#         frames.append(frame)
         startTimes.append(startTime)
         endTimes.append(endTime)
         legendObjs.append(legendObj)
@@ -367,23 +385,42 @@ def compareLPCSyllable(filenames, syllableFilenames, xaxis = 'linear'):
             startTime = startTimes[ii]
             endTime = endTimes[ii]
             audio = audios[ii]
+#             frame = frames[ii]
             xticklabelsObj = xticklabelsObjs[ii]
             
             startSample = int(startTime[mrk]*fs)
             endSample = int(endTime[mrk]*fs)
+            
+#             frameLen = len(frame)
+#             fStart = UFR.findMinDisFrameNum(startTime[mrk], frameLen, hopSize, fs)
+#             fEnd = UFR.findMinDisFrameNum(endTime[mrk], frameLen, hopSize, fs)
+#             sylFrame = frame[fStart: fEnd]
+#             sylFrame = np.array(sylFrame)
+#             sylSum = sylFrame.mean(1)
+#             sylFrame = UFR.vecRejectZero(sylFrame, sylSum)
+#             
+#             frequencyResponses = []
+#             for frame in sylFrame:
+#                 fr = UFR.lpcEnvelope(frame, npts)
+#                 frequencyResponses.append(abs(fr))
+#             frequencyResponses = np.array(frequencyResponses)
+#             frm = frequencyResponses.mean(0)
+#             mY1 = 20*np.log10(frm)
+            
             sylAudio = audio[startSample:endSample]
             sylAudio = UFR.vecRejectZero(sylAudio)
             sylAudio = np.array(sylAudio)
-            syl = xticklabelsObj[mrk]
             
             frequencyResponse = UFR.lpcEnvelope(sylAudio, npts)
-            mY = 20*np.log10(abs(frequencyResponse))
-            
+            mY2 = 20*np.log10(abs(frequencyResponse))
+            syl = xticklabelsObj[mrk]
             style = styles[ii]
-            plotLPCCompare(mY, style, npts, fs, xaxis)
+#             plotLPCCompare(mY1, styles[0], npts, fs, xaxis)
+            plotLPCCompare(mY2, style, npts, fs, xaxis)
             
-        plt.title('LPC envelope, syllable: ' + syl)
-        plt.legend(legendObjs)
+        plt.title('LPC envelope, syllable: ' + syl, family='Droid Sans Fallback')
+        plt.legend(legendObjs, loc = 'best')
+#         plt.legend(('lpc small frame average', 'lpc one frame for a syllable'), loc = 'best')
     plt.show()
             
 def plotLPCCompare(mY, style, npts, fs, xaxis):
@@ -399,7 +436,7 @@ def plotLPCCompare(mY, style, npts, fs, xaxis):
     plt.autoscale(tight=True)
     plt.grid(True)
     
-def compareLTAS(filenames, syllableFilenames = None, singerName = None,xaxis = 'linear'):
+def compareLTAS(filenames, syllableFilenames = None, singerName = None,xaxis = 'linear', plotSD = True):
     if type(filenames) == str:
         filenames = (filenames, )
         if syllableFilenames != None:
@@ -413,6 +450,7 @@ def compareLTAS(filenames, syllableFilenames = None, singerName = None,xaxis = '
     if syllableFilenames == None:
         fig, ax = plt.subplots()
         legend = []
+        meanPlots = []
         singer = 1
         for f in filenames:
             obj = FeaturesExtraction(f)
@@ -423,9 +461,19 @@ def compareLTAS(filenames, syllableFilenames = None, singerName = None,xaxis = '
             sumSpec = spec.mean(1)
             spec = UFR.vecRejectZero(spec, sumSpec) # reject zero
             spec = np.array(spec)
+            specDB = 20*np.log10(spec+eps)
+            
             meanSpec = spec.mean(0)
-            plotLTAS(meanSpec = meanSpec, style = styles[singer - 1], fs = fs, \
-            frameSize = frameSize, xaxis = xaxis)
+            meanSpecDB = 20 * np.log10(meanSpec+eps)
+            meanSpecDB = meanSpecDB - max(meanSpecDB)
+            
+            # this is physically incorrect to calculate std in db scale, 
+            # however we just want to show the variation in each frequency
+            stdSpecDB = specDB.std(0) 
+            
+            meanPlot = plotLTAS(meanSpecDB, stdSpecDB, styles[singer - 1], fs, \
+            frameSize, xaxis, plotSD)
+            meanPlots.append(meanPlot[0])
             
             if singerName == None:
                 singerString = 'singer' + str(singer)
@@ -439,7 +487,7 @@ def compareLTAS(filenames, syllableFilenames = None, singerName = None,xaxis = '
             singer = singer + 1
             
         plt.title('LTAS')
-        plt.legend(legend)
+        plt.legend(meanPlots, legend, loc = 'best')
         plt.show()
     else:
         spectro = []
@@ -483,6 +531,7 @@ def compareLTAS(filenames, syllableFilenames = None, singerName = None,xaxis = '
 
         for mrkNum in range(len(startTime)):
             fig = plt.subplots()
+            meanPlots = []
             for ii in range(len(filenames)):
                 startTime = startTimes[ii]
                 endTime = endTimes[ii]
@@ -499,28 +548,42 @@ def compareLTAS(filenames, syllableFilenames = None, singerName = None,xaxis = '
                 sumSpec = sylSpec.mean(1)
                 sylSpec = UFR.vecRejectZero(sylSpec, sumSpec)
                 sylSpec = np.array(sylSpec)
-                meanSpec = sylSpec.mean(0)
+                sylSpecDB = 20*np.log10(sylSpec+eps)
 
-                #std = UFR.stdValueRejectZero(self.featureVec, fStart, fEnd)
+                meanSpec = 20*np.log10(sylSpec.mean(0) + eps)
+                meanSpec = meanSpec - np.max(meanSpec)
+                stdSpec = sylSpecDB.std(0)
                 
                 style = styles[ii]
-                plotLTAS(meanSpec, style, fs, frameSize, xaxis)
-                plt.title('LTAS, syllable: ' + xticklabelsObj[mrkNum])
-                plt.legend(legendObjs)
+                meanPlot = plotLTAS(meanSpec, stdSpec, style, fs, frameSize, xaxis, plotSD)
+                meanPlots.append(meanPlot[0])
+                plt.title('LTAS, syllable: ' + xticklabelsObj[mrkNum], family='Droid Sans Fallback')
+                plt.legend(meanPlots, legendObjs, loc = 'best')
         plt.show()
         
             
-def plotLTAS(meanSpec, style, fs, frameSize, xaxis):
+def plotLTAS(meanSpec, stdSpec, style, fs, frameSize, xaxis, plotSD):
     freqBins = np.arange(meanSpec.shape[0])*(fs/float(frameSize)/2)
-    meanSpec = plt.plot(freqBins, 20 * np.log10(meanSpec), style)        
+    indexNum = 100
     if xaxis != 'linear' and xaxis != 'log':
         print 'xaxis should one of linear of log. use default xaxis = ''linear'''
         xaxis = 'linear'
     if xaxis == 'log':
-        plt.semilogx()   
+        plt.semilogx()
+        index = np.logspace(0, 1, num = indexNum, base = frameSize)
+    else:
+        index = np.linspace(0, len(freqBins)-1, indexNum)
+        
+    index = index.astype(int)
+    if plotSD == True:
+        step = round(200 / (fs/float(frameSize)/2))
+        meanPlot = plt.errorbar(freqBins[index], meanSpec[index], yerr = stdSpec[index], fmt = style)
+    else:
+        meanPlot = plt.plot(freqBins, meanSpec, style)  
         
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Amplitude (dB)')
     plt.xlim(0, 20000)
-    plt.grid(True)      
-
+    plt.grid(True)
+    
+    return meanPlot

@@ -54,7 +54,7 @@ class harmonicsSynthesis(object):
         
         print '\ncalculating spectrogram ... ...'
         mX = []
-        for frame in ess.FrameGenerator(self.audioEL, frameSize=self.frameSize, hopSize=self.hopSize):
+        for frame in ess.FrameGenerator(self.audio, frameSize=self.frameSize, hopSize=self.hopSize):
             frame = WINDOW(frame)
             mXFrame = SPECTRUM(frame)
             #store/append values per frame in an array
@@ -65,9 +65,6 @@ class harmonicsSynthesis(object):
         return self.mX
     
     def getMelody(self):
-        if len(self.mX) == 0:
-            print 'please do spectrogram analysis at first, then do getMelody.'
-            return
         minf0 = 200
         maxf0 = 1000
         binResolution = 10.0
@@ -76,36 +73,15 @@ class harmonicsSynthesis(object):
         t = -80 
 
         #init objects
-        SPECPEAKS = ess.SpectralPeaks(minFrequency=50, 
-                                maxFrequency=10000, 
-                                maxPeaks=100, 
-                                sampleRate=self.fs, 
-                                magnitudeThreshold= t,
-                                orderBy="magnitude")
-        PITCHSALIENCE = ess.PitchSalienceFunction(magnitudeThreshold=60, binResolution = binResolution)
-        SALIENCEPEAKS = ess.PitchSalienceFunctionPeaks(minFrequency=minf0, maxFrequency=maxf0)
-        PITCHCONTOURS = ess.PitchContours(hopSize=self.hopSize, peakFrameThreshold=0.7)
-        COMPUTEMELODY = ess.PitchContoursMelody(guessUnvoiced=guessUnvoiced, hopSize=self.hopSize)
+        MELODIA = ess.PredominantMelody(guessUnvoiced=guessUnvoiced,
+                                                   frameSize=self.frameSize,
+                                                   hopSize=self.hopSize,
+                                                   minFrequency=minf0,
+                                                   maxFrequency=maxf0,
+                                                   peakFrameThreshold=0.7)
 
-        #array to store pitch values
-        salBinsArr = []
-        salMagsArr = []
-
-        #loop starts for every audio frame
         print 'extracting melody ... ...'
-        for mXFrame in self.mX:
-    
-            mXFrameDB = 20*np.log10(mXFrame+eps)
-            pFreq, pMags = SPECPEAKS(mXFrameDB)
-            pMags = np.power(10, pMags/20.0)
-    
-            salFrame = PITCHSALIENCE(pFreq, pMags)
-            salBins, salMags = SALIENCEPEAKS(salFrame)
-            salBinsArr.append(salBins.tolist())
-            salMagsArr.append(salMags.tolist())
- 
-        cBins, cSals, cBounds, dur = PITCHCONTOURS(salBinsArr, salMagsArr)
-        pitch, confidence = COMPUTEMELODY(cBins, cSals, cBounds, dur)
+        pitch = MELODIA(self.audioEL)[0]
         self.pitch = pitch
         print "Melody extraction done, return " + str(np.size(pitch)) + ' values.\n'
         return self.pitch
@@ -310,20 +286,4 @@ class harmonicsSynthesis(object):
                              bbox_transform=ax.transAxes)
         plt.colorbar(specPlt, cax = ax_cbar)
         ax_cbar.set_title('dB')
-
-# filename1 = '../daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section.wav'
-# test1 = harmonicsSynthesis(filename1)
-# test1.spectrogram()
-# test1.getMelody()
-# 
-# fig = plt.figure(0)
-# test1.plotSpectrogram(fig = fig)
-# 
-# #test1.saveMelody()
-# test1.synthesis()
-# 
-# fig = plt.figure(1)
-# test1.plotSpectrogram(fig, 'harmonics')
-# 
-# plt.show()
 

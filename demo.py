@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 ##########################################################
 # 1. -----melody extraction, harmonics, residual synthesis
 from harmonicsSynthesis import *
@@ -89,9 +91,10 @@ filename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section_harmonics_pitc
 # syllable markers
 syllableFilename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section-words-mrkRearrange.txt'
 
-# one file, xaxis : 'linear' or 'log'
-singerName = ('Li Shengsu', )
-compareLTAS(filename1, singerName = singerName, xaxis = 'log')
+# one file, xaxis : 'linear' or 'log', plotSD: plot Standard deviation for LTAS
+# remember adding the uni-8 code declaration: # -*- coding: utf-8 -*- at the beginning of this file
+singerName = (u"李胜素(Li Shengsu)", )
+compareLTAS(filename1, singerName = singerName, xaxis = 'linear', plotSD = True)
 
 filename2 = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section_harmonics_pitchtrackCorrected.wav'
 syllableFilename2 = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section-words-mrkRearrange.txt'
@@ -101,13 +104,13 @@ filenames = (filename1, filename2)
 syllableFilenames = (syllableFilename1, syllableFilename2)
 
 # compare LTAS on whole file length, ignore the syllableFilenames arguments
-singerName = ('Li Shengsu', 'Chi Xiaoqiu')
-compareLTAS(filenames, singerName = singerName, xaxis = 'log')
+singerName = (u"李胜素(Li Shengsu)", u"迟小秋(Chi Xiaoqiu)")
+compareLTAS(filenames, singerName = singerName, xaxis = 'linear', plotSD = True)
 
 # compare LTAS on syllable level once syllable file is available
 # we don't need to give the singerName argument if syllableFilenames is given
 # because syllableFilenames contains singerName in its first line
-compareLTAS(filenames, syllableFilenames, xaxis = 'log')
+compareLTAS(filenames, syllableFilenames, xaxis = 'linear', plotSD = True)
 
 ###################################
 # 5. -----plot features of an audio

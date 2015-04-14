@@ -1,4 +1,4 @@
-import sys
+import sys, csv, codecs, cStringIO
 import numpy as np
 import essentia.standard as ess
 from scipy.signal import freqz
@@ -44,7 +44,7 @@ def vecRejectZero(vec, vecRef = []):
     
 def readSyllableMrk(syllableFilename):
     '''read syllable marker file'''
-    inFile = open(syllableFilename)
+    inFile = codecs.open(syllableFilename, 'r', 'utf-8')
     
     title = None
     startMrk = []
@@ -86,8 +86,37 @@ def autolabelBar(rects, ax):
 
 def lpcEnvelope(audioSamples, npts):
     '''npts is even number'''
-    lpc = ess.LPC(order = 6)
+    lpc = ess.LPC(order = 10)
     lpcCoeffs = lpc(audioSamples)
     frequencyResponse = fft(lpcCoeffs[0], npts) 
     return frequencyResponse[:npts/2]
+    
+class UnicodeWriter:
+    """
+    A CSV writer which will write rows to CSV file "f",
+    which is encoded in the given encoding.
+    """
+
+    def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
+        # Redirect output to a queue
+        self.queue = cStringIO.StringIO()
+        self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
+        self.stream = f
+        self.encoder = codecs.getincrementalencoder(encoding)()
+
+    def writerow(self, row):
+        self.writer.writerow([s.encode("utf-8") if isinstance(s, basestring) else s for s in row])
+        # Fetch UTF-8 output from the queue ...
+        data = self.queue.getvalue()
+        data = data.decode("utf-8")
+        # ... and reencode it into the target encoding
+        data = self.encoder.encode(data)
+        # write to the target stream
+        self.stream.write(data)
+        # empty queue
+        self.queue.truncate(0)
+
+    def writerows(self, rows):
+        for row in rows:
+            self.writerow(row)
     

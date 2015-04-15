@@ -10,6 +10,8 @@ run demo.py
 
 syllable marker file should be utf-8 encoding
 
+download also font folder which contains the font used in plot
+
 ## modules required
 numpy  
 scipy  

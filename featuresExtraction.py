@@ -4,9 +4,7 @@ import essentia.standard as ess
 import matplotlib.pyplot as plt
 import utilFunctionsRong as UFR
 import numpy as np
-from scipy.signal import get_window
-from scipy.signal import blackmanharris, triang
-from scipy.fftpack import fft, ifft, fftshift
+from scipy.signal import get_window, lfilter
 
 eps = np.finfo(np.float).eps
 
@@ -411,7 +409,15 @@ def compareLPCSyllable(filenames, syllableFilenames, xaxis = 'linear'):
             sylAudio = UFR.vecRejectZero(sylAudio)
             sylAudio = np.array(sylAudio)
             
-            frequencyResponse = UFR.lpcEnvelope(sylAudio, npts)
+            # windowing signal
+            window = get_window('hann', len(sylAudio))
+            sylAudio = sylAudio * window
+                        
+            #pre-emphasis filter
+            b = [1, -0.9375]
+            sylAudio = lfilter(b, 1, sylAudio)
+            
+            frequencyResponse = UFR.lpcEnvelope(sylAudio.astype(np.float32), npts)
             mY2 = 20*np.log10(abs(frequencyResponse))
             syl = xticklabelsObj[mrk]
             style = styles[ii]

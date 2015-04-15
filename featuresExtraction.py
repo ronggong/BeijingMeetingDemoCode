@@ -2,11 +2,15 @@ import sys, csv, os, collections
 import essentia as es
 import essentia.standard as ess
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
 import utilFunctionsRong as UFR
 import numpy as np
 from scipy.signal import get_window, lfilter
 
 eps = np.finfo(np.float).eps
+droidTitle = fm.FontProperties(fname='font/DroidSansFallback.ttf', size = 16)
+droidLegend = fm.FontProperties(fname='font/DroidSansFallback.ttf', size = 12)
+droidTick = fm.FontProperties(fname='font/DroidSansFallback.ttf', size = 12)
 
 #set line width
 plt.rcParams['lines.linewidth'] = 1
@@ -113,11 +117,11 @@ class FeaturesExtraction(object):
         featureVec = np.array(self.featureVec)
         timeStamps = np.arange(featureVec.size)*self.hopSize/float(self.fs)                             
         plt.plot(timeStamps,featureVec)
-        meanValue = round(np.mean(featureVec),2)
-        stdValue = round(np.std(featureVec),2)
-        cvValue = meanValue/stdValue
-        title = self.feature + ' mean: ' + '%.2f'%meanValue \
-                + ' coeff of variation: ' + '%.2f'%cvValue
+        meanValue = np.mean(featureVec)
+        stdValue = np.std(featureVec)
+        cvValue = stdValue/meanValue
+        title = self.feature + ' mean: ' + '%.3f'%round(meanValue,3) \
+                + ' standard deviation: ' + '%.3f'%round(stdValue,3)
         
         plt.title(title)
         plt.xlabel(xlabel)
@@ -190,12 +194,12 @@ class FeaturesExtractionSyllable(FeaturesExtraction):
         syllableNum = len(self.syllableMean)
         ind = np.arange(syllableNum)
         width = 0.35
-        meanValue = round(np.mean(self.syllableMean),2)
-        stdValue = round(np.std(self.syllableMean),2)
-        cvValue = meanValue/stdValue
+        meanValue = np.mean(self.syllableMean)
+        stdValue = np.std(self.syllableMean)
+        cvValue = stdValue/meanValue
         barGraph = plt.bar(ind, self.syllableMean, width, color='r', yerr = self.syllableStd)
-        title = self.feature + ' mean: ' + '%.2f'%meanValue + \
-        ' coeff of variation: ' + '%.2f'%cvValue
+        title = self.feature + ' mean: ' + '%.3f'%round(meanValue,3) + \
+        ' standard deviation: ' + '%.3f'%round(stdValue,3)
         
         plt.title(title)
         plt.ylabel(ylabel)
@@ -218,7 +222,7 @@ def compareFeaturesSyllableMean(filenames, syllableFilenames, feature = 'speccen
         print("Warning: It doesn't make sense to compare loudness if two files are " + 
         "recorded differently. Because the recording environment, the use of recording " +
         "mixing technique (the use of compressor, expander or other dynamic control" + 
-        "in music post production) are different.")
+        " in music post production) are different.")
         
     obj = FeaturesExtractionSyllable(filenames[0], syllableFilenames[0])
     availableFeatures = obj.getFeatures()
@@ -280,19 +284,19 @@ def plotFeaturesCompare(sylMeans, sylStds, legends, xticklabels, feature, availa
     colors = ('r', 'y','b')
     for ii in range(len(sylMeans)):
         bar = plt.bar(ind + ii*width, sylMeans[ii], width, color=colors[ii], yerr = sylStds[ii])
-        meanValue = round(np.mean(sylMeans[ii]),2)
-        stdValue = round(np.std(sylMeans[ii]),2)
-        cvValue = meanValue/stdValue
-        title = title + ' ' + legends[ii] + ' mean: ' + '%.2f'%meanValue + \
-        ' coeff of variation:' + '%.2f'%cvValue + '\n'
+        meanValue = np.mean(sylMeans[ii])
+        stdValue = np.std(sylMeans[ii])
+        cvValue = stdValue/meanValue
+        title = title + ' ' + legends[ii] + ' mean: ' + '%.3f'%round(meanValue,3) + \
+        ' standard deviation:' + '%.3f'%round(stdValue,3) + '\n'
         UFR.autolabelBar(bar, ax)
         
-    title = title[:-2]
+    title = title[:-1]
         
-    plt.title(title)
+    plt.title(title, fontproperties=droidTitle)
     plt.ylabel(ylabel)
-    plt.xticks(ind+(len(sylMeans)/2.0) * width, xticklabels)
-    plt.legend(legends)
+    plt.xticks(ind+(len(sylMeans)/2.0) * width, xticklabels, fontproperties=droidTick)
+    plt.legend(legends, prop=droidLegend)
     plt.autoscale(tight=True)
     plt.show()
     
@@ -409,13 +413,13 @@ def compareLPCSyllable(filenames, syllableFilenames, xaxis = 'linear'):
             sylAudio = UFR.vecRejectZero(sylAudio)
             sylAudio = np.array(sylAudio)
             
-            # windowing signal
-            window = get_window('hann', len(sylAudio))
-            sylAudio = sylAudio * window
-                        
             #pre-emphasis filter
             b = [1, -0.9375]
             sylAudio = lfilter(b, 1, sylAudio)
+            
+            # windowing signal
+            window = get_window('hann', len(sylAudio))
+            sylAudio = sylAudio * window
             
             frequencyResponse = UFR.lpcEnvelope(sylAudio.astype(np.float32), npts)
             mY2 = 20*np.log10(abs(frequencyResponse))
@@ -424,8 +428,8 @@ def compareLPCSyllable(filenames, syllableFilenames, xaxis = 'linear'):
 #             plotLPCCompare(mY1, styles[0], npts, fs, xaxis)
             plotLPCCompare(mY2, style, npts, fs, xaxis)
             
-        plt.title('LPC envelope, syllable: ' + syl, family='Droid Sans Fallback')
-        plt.legend(legendObjs, loc = 'best')
+        plt.title('LPC envelope, syllable: ' + syl, fontproperties=droidTitle)
+        plt.legend(legendObjs, loc = 'best', prop=droidLegend)
 #         plt.legend(('lpc small frame average', 'lpc one frame for a syllable'), loc = 'best')
     plt.show()
             
@@ -493,7 +497,7 @@ def compareLTAS(filenames, syllableFilenames = None, singerName = None,xaxis = '
             singer = singer + 1
             
         plt.title('LTAS')
-        plt.legend(meanPlots, legend, loc = 'best')
+        plt.legend(meanPlots, legend, loc = 'best', prop=droidLegend)
         plt.show()
     else:
         spectro = []
@@ -563,8 +567,8 @@ def compareLTAS(filenames, syllableFilenames = None, singerName = None,xaxis = '
                 style = styles[ii]
                 meanPlot = plotLTAS(meanSpec, stdSpec, style, fs, frameSize, xaxis, plotSD)
                 meanPlots.append(meanPlot[0])
-                plt.title('LTAS, syllable: ' + xticklabelsObj[mrkNum], family='Droid Sans Fallback')
-                plt.legend(meanPlots, legendObjs, loc = 'best')
+                plt.title('LTAS, syllable: ' + xticklabelsObj[mrkNum], fontproperties=droidTitle)
+                plt.legend(meanPlots, legendObjs, loc = 'best', prop=droidLegend)
         plt.show()
         
             

@@ -214,8 +214,12 @@ class FeaturesExtractionSyllable(FeaturesExtraction):
             UFR.autolabelBar(barGraph, ax)
         plt.legend((self.syllableMrk[0],), prop=droidLegend)
         
-def plotFeatureSyllable(filename, syllableFilename, feature = 'speccentroid'):
-    obj = FeaturesExtractionSyllable(filename, syllableFilename)
+def plotFeatureSyllable(filename, syllableFilename = None, feature = 'speccentroid'):
+    if syllableFilename != None:
+        obj = FeaturesExtractionSyllable(filename, syllableFilename)
+    else:
+        obj = FeaturesExtraction(filename)
+        
     availableFeatures = obj.getFeatures()
     
     if feature not in availableFeatures:
@@ -223,11 +227,7 @@ def plotFeatureSyllable(filename, syllableFilename, feature = 'speccentroid'):
         return
     
     obj.spectrogram()
-    obj.extractFeature(feature)
-    obj.meanStdSyllable()
-    syllableVecs = obj.getSyllableVecs()
-    legends = obj.getLegend()
-    xticklabels = obj.getXticklabels()
+    featureVec = obj.extractFeature(feature)
     hopSize = obj.getHopSize()
     fs = obj.getFs()
     
@@ -238,6 +238,14 @@ def plotFeatureSyllable(filename, syllableFilename, feature = 'speccentroid'):
         ylabel = 'Norm Loudness'
     elif feature == availableFeatures[2]:
         ylabel = 'Flux'
+    
+    if syllableFilename != None:
+        obj.meanStdSyllable()
+        syllableVecs = obj.getSyllableVecs()
+        legends = obj.getLegend()
+        xticklabels = obj.getXticklabels()
+    else:
+        syllableVecs = (featureVec, )
     
     for ii in range(len(syllableVecs)):
         sylVec = syllableVecs[ii]
@@ -250,8 +258,12 @@ def plotFeatureSyllable(filename, syllableFilename, feature = 'speccentroid'):
         meanValue = np.mean(sylVec)
         stdValue = np.std(sylVec)
         cvValue = stdValue/meanValue
-        title = feature + ' ' + xticklabels[ii] + ' mean: ' + '%.3f'%round(meanValue,3) \
-                + ' standard deviation: ' + '%.3f'%round(stdValue,3)
+        if syllableFilename != None:
+            title = feature + ' ' + xticklabels[ii] + ' mean: ' + '%.3f'%round(meanValue,3) \
+                    + ' standard deviation: ' + '%.3f'%round(stdValue,3)
+        else:
+            title = feature + ' mean: ' + '%.3f'%round(meanValue,3) \
+                    + ' standard deviation: ' + '%.3f'%round(stdValue,3)
         
         plt.title(title, fontproperties=droidTitle)
         plt.xlabel('Time (s)')

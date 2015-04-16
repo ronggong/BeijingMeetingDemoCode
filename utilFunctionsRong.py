@@ -84,9 +84,9 @@ def autolabelBar(rects, ax):
         ax.text(rect.get_x()+rect.get_width()/2., 1.05*height, '%.2f'%float(height),
                 ha='center', va='bottom')
 
-def lpcEnvelope(audioSamples, npts):
+def lpcEnvelope(audioSamples, npts, order):
     '''npts is even number'''
-    lpc = ess.LPC(order = 10)
+    lpc = ess.LPC(order = order)
     lpcCoeffs = lpc(audioSamples)
     frequencyResponse = fft(lpcCoeffs[0], npts) 
     return frequencyResponse[:npts/2]

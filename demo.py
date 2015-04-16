@@ -68,8 +68,8 @@ filename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section_harmonics_pitc
 # syllable markers
 syllableFilename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section-words-mrkRearrange.txt'
 
-# one file, xaxis : 'linear' or 'log'
-compareLPCSyllable(filename1, syllableFilename1, xaxis = 'log')
+# one file, xaxis : 'linear' or 'log', LPC order default: 10, choose interval [1 50]
+compareLPCSyllable(filename1, syllableFilename1, lpcorder = 10, xaxis = 'log', xlim = [0, 20000], ylim = [-40, 45])
 
 filename2 = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section_harmonics_pitchtrackCorrected.wav'
 syllableFilename2 = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section-words-mrkRearrange.txt'
@@ -79,7 +79,7 @@ filenames = (filename1, filename2)
 syllableFilenames = (syllableFilename1, syllableFilename2)
 
 # compare two files
-compareLPCSyllable(filenames, syllableFilenames, xaxis = 'log')
+compareLPCSyllable(filenames, syllableFilenames, lpcorder = 10, xaxis = 'log')
 
 ################################################
 # 4. -----compare LTAS, 1 to 3 files
@@ -94,7 +94,7 @@ syllableFilename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section-words-
 # one file, xaxis : 'linear' or 'log', plotSD: plot Standard deviation for LTAS
 # remember adding the uni-8 code declaration: # -*- coding: utf-8 -*- at the beginning of this file
 singerName = (u"李胜素(Li Shengsu)", )
-compareLTAS(filename1, singerName = singerName, xaxis = 'linear', plotSD = True)
+compareLTAS(filename1, singerName = singerName, xaxis = 'linear', plotSD = True, xlim = [0, 10000], ylim = [-80, 10])
 
 filename2 = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section_harmonics_pitchtrackCorrected.wav'
 syllableFilename2 = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section-words-mrkRearrange.txt'
@@ -113,7 +113,20 @@ compareLTAS(filenames, singerName = singerName, xaxis = 'linear', plotSD = True)
 compareLTAS(filenames, syllableFilenames, xaxis = 'linear', plotSD = True)
 
 ###################################
-# 5. -----plot features of an audio
+# 5. -----plot features of syllables
+from featuresExtraction import *
+
+# wav file
+filename = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section_harmonics_pitchtrackCorrected.wav'
+
+# syllable markers
+syllableFilename = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section-words-mrkRearrange.txt'
+
+# one file, feature could be speccentroid or specloudness or specflux
+plotFeatureSyllable(filename, syllableFilename, feature = 'speccentroid')
+
+###################################
+# 6. -----plot features of an audio
 from featuresExtraction import *
 
 filename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section_harmonics_pitchtrackCorrected.wav'

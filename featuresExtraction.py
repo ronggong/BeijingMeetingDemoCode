@@ -134,6 +134,7 @@ class FeaturesExtractionSyllable(FeaturesExtraction):
     def __init__(self, filename, syllableFilename, fs = 44100, frameSize = 2048, hopSize = 256):
         FeaturesExtraction.__init__(self, filename, fs = fs, frameSize = frameSize, hopSize = hopSize)
         self.syllableMrk = UFR.readSyllableMrk(syllableFilename)
+        self.syllableVecs = []
         self.syllableMean = []
         self.syllableStd = []
     
@@ -147,6 +148,9 @@ class FeaturesExtractionSyllable(FeaturesExtraction):
         return self.syllableMrk[1]
     def getEndTime(self):
         return self.syllableMrk[2]
+        
+    def getSyllableVecs(self):
+        return self.syllableVecs
     
     def meanStdSyllable(self):
         if len(self.featureVec) == 0:
@@ -158,11 +162,14 @@ class FeaturesExtractionSyllable(FeaturesExtraction):
         frameLen = len(self.mX)
         syllableMean = []
         syllableStd = []
+        syllableVecs = []
         for mrkNum in range(len(startMrk)):
             tStart = startMrk[mrkNum]
             tEnd = endMrk[mrkNum]
             fStart = UFR.findMinDisFrameNum(tStart, frameLen, self.hopSize, self.fs)
             fEnd = UFR.findMinDisFrameNum(tEnd, frameLen, self.hopSize, self.fs)
+            
+            self.syllableVecs.append(self.featureVec[fStart:fEnd])
             
             mean = UFR.meanValueRejectZero(self.featureVec, fStart, fEnd)
             std = UFR.stdValueRejectZero(self.featureVec, fStart, fEnd)
@@ -179,11 +186,10 @@ class FeaturesExtractionSyllable(FeaturesExtraction):
         #return a dictionary
         return (syllableMean, syllableStd)
     
-    def plotFeatureSyllable(self, ax = None):
+    def plotFeatureSyllableMean(self, ax = None):
         if len(self.syllableMean) == 0:
             print 'Please run meanStdSyllable function firstly, then do the plot.'
         
-        yLabel = None
         if self.feature == self.features[0]: 
             ylabel = 'Frequency (Hz)'
         elif self.feature == self.features[1]:
@@ -201,13 +207,59 @@ class FeaturesExtractionSyllable(FeaturesExtraction):
         title = self.feature + ' mean: ' + '%.3f'%round(meanValue,3) + \
         ' standard deviation: ' + '%.3f'%round(stdValue,3)
         
-        plt.title(title)
+        plt.title(title, fontproperties=droidTitle)
         plt.ylabel(ylabel)
-        plt.xticks(ind+width/2.0, self.syllableMrk[3])
+        plt.xticks(ind+width/2.0, self.syllableMrk[3], fontproperties=droidTick)
         if ax != None:
             UFR.autolabelBar(barGraph, ax)
-        plt.legend((self.syllableMrk[0],))
+        plt.legend((self.syllableMrk[0],), prop=droidLegend)
         
+def plotFeatureSyllable(filename, syllableFilename, feature = 'speccentroid'):
+    obj = FeaturesExtractionSyllable(filename, syllableFilename)
+    availableFeatures = obj.getFeatures()
+    
+    if feature not in availableFeatures:
+        print 'the argument feature should be one of ', availableFeatures
+        return
+    
+    obj.spectrogram()
+    obj.extractFeature(feature)
+    obj.meanStdSyllable()
+    syllableVecs = obj.getSyllableVecs()
+    legends = obj.getLegend()
+    xticklabels = obj.getXticklabels()
+    hopSize = obj.getHopSize()
+    fs = obj.getFs()
+    
+    yLabel = None
+    if feature == availableFeatures[0]: 
+        ylabel = 'Frequency (Hz)'
+    elif feature == availableFeatures[1]:
+        ylabel = 'Norm Loudness'
+    elif feature == availableFeatures[2]:
+        ylabel = 'Flux'
+    
+    for ii in range(len(syllableVecs)):
+        sylVec = syllableVecs[ii]
+        fig, ax = plt.subplots()
+        sylVec = np.array(sylVec)
+        timeStamps = np.arange(sylVec.size)*hopSize/float(fs)   
+                                  
+        plt.plot(timeStamps,sylVec)
+        
+        meanValue = np.mean(sylVec)
+        stdValue = np.std(sylVec)
+        cvValue = stdValue/meanValue
+        title = feature + ' ' + xticklabels[ii] + ' mean: ' + '%.3f'%round(meanValue,3) \
+                + ' standard deviation: ' + '%.3f'%round(stdValue,3)
+        
+        plt.title(title, fontproperties=droidTitle)
+        plt.xlabel('Time (s)')
+        plt.ylabel(ylabel)
+        plt.autoscale(tight=True)
+    plt.show()
+
+    
 def compareFeaturesSyllableMean(filenames, syllableFilenames, feature = 'speccentroid'):
     if type(filenames) == str:
         filenames = (filenames, )
@@ -329,7 +381,7 @@ def writeCSV(sylMeans, sylStds, legendObjs, xticklabelsObj, outputFilename = Non
     
     print 'result is wrote into: ', outputFilename, '\n'
     
-def compareLPCSyllable(filenames, syllableFilenames, xaxis = 'linear'):
+def compareLPCSyllable(filenames, syllableFilenames, lpcorder = 10, xaxis = 'linear', xlim = [], ylim = []):
     if type(filenames) == str:
         filenames = (filenames, )
         if syllableFilenames != None:
@@ -337,6 +389,10 @@ def compareLPCSyllable(filenames, syllableFilenames, xaxis = 'linear'):
     
     if len(filenames) > 3:
         print 'we can''t compare more than 3 files right now.'
+        return
+    
+    if lpcorder < 1 or lpcorder > 50:
+        print 'please choose a reasonable lpc order, like between [8, 14].'
         return
         
     audios = []
@@ -421,19 +477,19 @@ def compareLPCSyllable(filenames, syllableFilenames, xaxis = 'linear'):
             window = get_window('hann', len(sylAudio))
             sylAudio = sylAudio * window
             
-            frequencyResponse = UFR.lpcEnvelope(sylAudio.astype(np.float32), npts)
+            frequencyResponse = UFR.lpcEnvelope(sylAudio.astype(np.float32), npts, lpcorder)
             mY2 = 20*np.log10(abs(frequencyResponse))
             syl = xticklabelsObj[mrk]
             style = styles[ii]
 #             plotLPCCompare(mY1, styles[0], npts, fs, xaxis)
-            plotLPCCompare(mY2, style, npts, fs, xaxis)
+            plotLPCCompare(mY2, style, npts, fs, xaxis, xlim, ylim)
             
         plt.title('LPC envelope, syllable: ' + syl, fontproperties=droidTitle)
         plt.legend(legendObjs, loc = 'best', prop=droidLegend)
 #         plt.legend(('lpc small frame average', 'lpc one frame for a syllable'), loc = 'best')
     plt.show()
             
-def plotLPCCompare(mY, style, npts, fs, xaxis):
+def plotLPCCompare(mY, style, npts, fs, xaxis, xlim, ylim):
     if xaxis != 'linear' and xaxis != 'log':
         print 'xaxis should one of linear of log. use default xaxis = ''linear'''
         xaxis = 'linear'
@@ -446,7 +502,13 @@ def plotLPCCompare(mY, style, npts, fs, xaxis):
     plt.autoscale(tight=True)
     plt.grid(True)
     
-def compareLTAS(filenames, syllableFilenames = None, singerName = None,xaxis = 'linear', plotSD = True):
+    if len(xlim) != 0:
+        plt.xlim(xlim)
+    
+    if len(ylim) != 0:
+        plt.ylim(ylim)
+    
+def compareLTAS(filenames, syllableFilenames = None, singerName = None,xaxis = 'linear', plotSD = True, xlim = [], ylim = []):
     if type(filenames) == str:
         filenames = (filenames, )
         if syllableFilenames != None:
@@ -482,7 +544,7 @@ def compareLTAS(filenames, syllableFilenames = None, singerName = None,xaxis = '
             stdSpecDB = specDB.std(0) 
             
             meanPlot = plotLTAS(meanSpecDB, stdSpecDB, styles[singer - 1], fs, \
-            frameSize, xaxis, plotSD)
+            frameSize, xaxis, plotSD, xlim, ylim)
             meanPlots.append(meanPlot[0])
             
             if singerName == None:
@@ -565,14 +627,14 @@ def compareLTAS(filenames, syllableFilenames = None, singerName = None,xaxis = '
                 stdSpec = sylSpecDB.std(0)
                 
                 style = styles[ii]
-                meanPlot = plotLTAS(meanSpec, stdSpec, style, fs, frameSize, xaxis, plotSD)
+                meanPlot = plotLTAS(meanSpec, stdSpec, style, fs, frameSize, xaxis, plotSD, xlim, ylim)
                 meanPlots.append(meanPlot[0])
                 plt.title('LTAS, syllable: ' + xticklabelsObj[mrkNum], fontproperties=droidTitle)
                 plt.legend(meanPlots, legendObjs, loc = 'best', prop=droidLegend)
         plt.show()
         
             
-def plotLTAS(meanSpec, stdSpec, style, fs, frameSize, xaxis, plotSD):
+def plotLTAS(meanSpec, stdSpec, style, fs, frameSize, xaxis, plotSD, xlim, ylim):
     freqBins = np.arange(meanSpec.shape[0])*(fs/float(frameSize)/2)
     indexNum = 100
     if xaxis != 'linear' and xaxis != 'log':
@@ -593,7 +655,14 @@ def plotLTAS(meanSpec, stdSpec, style, fs, frameSize, xaxis, plotSD):
         
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Amplitude (dB)')
-    plt.xlim(0, 20000)
     plt.grid(True)
+
+    if len(xlim) != 0:
+        plt.xlim(xlim)
+    else:
+        plt.xlim(0, 20000)
+        
+    if len(ylim) != 0:
+        plt.ylim(ylim)
     
     return meanPlot

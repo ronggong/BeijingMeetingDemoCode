@@ -117,10 +117,39 @@ class harmonicsSynthesis(object):
             pitch = self.pitch
         np.savetxt(outputFilename, np.vstack((xTimeVec, pitch)).T)
         print("Melody pitch is saved at: " + outputFilename + "\n")
+        
+    def loadMelody(self, inputFilename = None):
+        print 'input pitch track should be ''hz'' unit.'
+        robj = UFR.readMelodiaPitch(inputFilename)
+        pitch = np.array(robj[1])
+        newPoints = robj[2]
+        
+        # delete all the new point
+        toDelete = []
+        for ii in range(len(pitch)):
+            if newPoints[ii] == 'New':
+                toDelete.append(ii)
+        pitch = np.delete(pitch, toDelete)
+        
+        #filter pitch below 100 Hz
+        for ii in range(len(pitch)):
+            if pitch[ii] < 100:
+                pitch[ii] = 0.0
+                
+        # melodia vamp plug-in lose a point, so we add one
+        pitch = np.insert(pitch, 0, 0)
+        
+        print 'load melody done, return ', len(pitch), ' points.\n'
+        self.pitch = pitch
+        return self.pitch
     
     def synthesis(self, harmonicsOutputFilename = None, residualOutputFilename = None):
         if len(self.pitch) == 0:
             print 'please do getMelody at first, then do saveMelody.'
+            return
+        
+        if len(self.pitch) != len(self.mX):
+            print 'please make sure that the pitch track belongs to the loaded audio, and they are equal length.'
             return
             
         if harmonicsOutputFilename == None:

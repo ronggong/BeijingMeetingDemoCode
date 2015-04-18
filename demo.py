@@ -6,25 +6,31 @@ from harmonicsSynthesis import *
 
 filename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section.wav'
 
-#test1 is harmonicsSynthesis object
+# 1) test1 is harmonicsSynthesis object
 #harmonicsSynthesis(filename = aName, fs = fs, frameSize = frameSize, hopSize = hopSize)
 test1 = harmonicsSynthesis(filename1)
 
-# calculate spectrogram
+# 2) calculate spectrogram
 test1.spectrogram()
 
-# calculate melody by essentia's algorithm
+## 3 - 1) calculate melody by essentia's algorithm
 test1.getMelody()
 
-# save the melody to .txt 
+## save the melody to .txt 
 # saveMelody(outputFilename = aName, unit = 'hz' or 'cents')
-test1.saveMelody()	
+test1.saveMelody()
+
+## 3 - 2) or load melody from .txt, melody is exported from Melodia, unit should be 'hz'
+# you can correct pitch track manually, then use it here
+# jump step 3 - 1)
+pitchTrackMelodia = 'Li Shengsu-pitchtrackMelodia.txt'
+test1.loadMelody(pitchTrackMelodia)
 
 # plot original spectrogram
 fig = plt.figure(0)
 test1.plotSpectrogram(fig = fig)
 
-# synthesis of harmonics and residual, 
+# 4) synthesis of harmonics and residual, 
 # synthesis(harmonicsOutputFilename = aName1, residualOutputFilename = aName2):
 test1.synthesis()
 

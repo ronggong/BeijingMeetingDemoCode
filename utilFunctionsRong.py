@@ -65,6 +65,25 @@ def readSyllableMrk(syllableFilename):
             
     return (title, startMrk, endMrk, syl)
 
+def readMelodiaPitch(inputFile):
+    '''read syllable marker file'''
+    inFile = open(inputFile, 'r')
+    
+    timeStamps = []
+    pitch = []
+    newPoints = [] # new point marker
+    for line in inFile:
+        fields = line.split()
+        timeStamps.append(float(fields[0]))
+        pitch.append(float(fields[1]))
+        
+        if len(fields) > 2:
+            newPoints.append(fields[2])
+        else:
+            newPoints.append('')
+            
+    return (timeStamps, pitch, newPoints)
+
 def hz2cents(hz, tuning):
     '''convert Hz to cents
     input: float num in Hz

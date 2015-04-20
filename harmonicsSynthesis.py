@@ -148,9 +148,13 @@ class harmonicsSynthesis(object):
             print 'please do getMelody at first, then do saveMelody.'
             return
         
-        if len(self.pitch) != len(self.mX):
+        if len(self.pitch) < len(self.mX):
             print 'please make sure that the pitch track belongs to the loaded audio, and they are equal length.'
             return
+        
+        if len(self.pitch) > len(self.mX):
+            print 'pitch track has more frames than audio file, we will cut frames surplus in pitch track.'
+            self.pitch = self.pitch[:len(self.mX)]
             
         if harmonicsOutputFilename == None:
             harmonicsOutputFilename = self.inputFilename[:-4] + '-harmonics.wav'

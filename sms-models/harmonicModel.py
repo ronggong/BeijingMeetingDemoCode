@@ -68,7 +68,7 @@ def harmonicDetection(pfreq, pmag, pphase, f0, nH, hfreqp, fs, devRatio = 3.0, h
 	returns hfreq, hmag, hphase: harmonic frequencies, magnitudes, phases
 	"""
 
-	if (f0<=0):                                          # if no f0 return no harmonics
+	if (f0<=0) or len(pfreq) == 0:                       # if no f0 or no peaks return no harmonics
 		return np.zeros(nH), np.zeros(nH), np.zeros(nH)
 	hfreq = np.zeros(nH)                                 # initialize harmonic frequencies
 	hmag = np.zeros(nH)-100                              # initialize harmonic magnitudes

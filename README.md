@@ -1,7 +1,7 @@
-# Beijing Meeting Demo Code
+# Jingju Arias Timbre Analysis
 python
 
-## use
+## usage
 Youtube video demo: http://youtu.be/YZMK5vJ_A8M
 
 download this folder,  

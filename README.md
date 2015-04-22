@@ -1,4 +1,4 @@
-# Jingju Arias Timbre Analysis
+# Jingju Arias MIR Analysis
 python
 
 ## usage

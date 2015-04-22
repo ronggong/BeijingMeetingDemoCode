@@ -117,8 +117,8 @@ class FeaturesExtraction(object):
         featureVec = np.array(self.featureVec)
         timeStamps = np.arange(featureVec.size)*self.hopSize/float(self.fs)                             
         plt.plot(timeStamps,featureVec)
-        meanValue = np.mean(featureVec)
-        stdValue = np.std(featureVec)
+        meanValue = np.mean(UFR.vecRejectZero(featureVec))
+        stdValue = np.std(UFR.vecRejectZero(featureVec))
         cvValue = stdValue/meanValue
         title = self.feature + ' mean: ' + '%.3f'%round(meanValue,3) \
                 + ' standard deviation: ' + '%.3f'%round(stdValue,3)
@@ -255,8 +255,8 @@ def plotFeatureSyllable(filename, syllableFilename = None, feature = 'speccentro
                                   
         plt.plot(timeStamps,sylVec)
         
-        meanValue = np.mean(sylVec)
-        stdValue = np.std(sylVec)
+        meanValue = np.mean(UFR.vecRejectZero(sylVec))
+        stdValue = np.std(UFR.vecRejectZero(sylVec))
         cvValue = stdValue/meanValue
         if syllableFilename != None:
             title = feature + ' ' + xticklabels[ii] + ' mean: ' + '%.3f'%round(meanValue,3) \

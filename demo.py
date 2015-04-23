@@ -149,14 +149,14 @@ test1.extractFeature('speccentroid')
 plt.figure(0)
 test1.plotFeature()
 
-# spectral loudness
-test1.extractFeature('specloudness')
+# spectral loudness, normTo: norm loudness mean to 0.5, default not normalize
+test1.extractFeature('specloudness', normTo = 0.5)
 
 plt.figure(1)
 test1.plotFeature()
 
-# spectral flux
-test1.extractFeature('specflux')
+# spectral flux, normTo: norm loudness mean to 0.5, default not normalize
+test1.extractFeature('specflux', normTo = 0.5)
 
 plt.figure(2)
 test1.plotFeature()

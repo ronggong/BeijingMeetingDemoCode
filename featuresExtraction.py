@@ -74,7 +74,7 @@ class FeaturesExtraction(object):
         print "spectrogram calculation done, return " + str(len(self.mX)) + ' frames.\n'
         return self.mX
         
-    def extractFeature(self, feature):
+    def extractFeature(self, feature, normTo = 0):
         if len(self.mX) == 0:
             print 'Please run function spectrogram() firsly, then do ' + feature + 'calculation.'
             return
@@ -90,12 +90,30 @@ class FeaturesExtraction(object):
         elif feature == self.features[1]:
             featureObject = ess.Loudness()
         elif feature == self.features[2]:
+            loudnessObject = ess.Loudness()
             featureObject = ess.Flux()
         
         print 'extracting feature: ', feature
         
-        for s in self.mX:               
-            out.append(featureObject(s))
+        if normTo > 0:
+            # when Extract Flux feature, normalize loudness
+            if feature == self.features[2]:
+                for s in self.mX:               
+                    out.append(loudnessObject(s))
+            else:
+                for s in self.mX:               
+                    out.append(featureObject(s))
+            
+            # if feature is loudness normalize
+            if feature == self.features[1] or feature == self.features[2]:
+                meanLoud = np.mean(UFR.vecRejectZero(np.array(out)))
+                normCoeff = pow(normTo/meanLoud, 1/0.67/2.0)
+                out = []
+                for s in self.mX:
+                    out.append(featureObject(s * normCoeff))
+        else:
+            for s in self.mX:
+                out.append(featureObject(s))
                 
         self.featureVec = out
         print feature + ' calculation done, return ' + str(len(self.featureVec)) + ' values.\n'

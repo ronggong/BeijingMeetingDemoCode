@@ -700,6 +700,10 @@ def compareLTAS(filenames, syllableFilenames = None, singerName = None,xaxis = '
             meanSpecDB = 20 * np.log10(meanSpec+eps)
             meanSpecDB = meanSpecDB - max(meanSpecDB)
             
+            # ---- calculate spectral slope 
+            # fitCoeffs = UFR.spectralSlope(meanSpecDB,frameSize,fs,[200, 5000])
+            # slope = fitCoeffs[0] * (4186-261)/4.0
+            
             # this is physically incorrect to calculate std in db scale, 
             # however we just want to show the variation in each frequency
             stdSpecDB = specDB.std(0) 
@@ -721,6 +725,12 @@ def compareLTAS(filenames, syllableFilenames = None, singerName = None,xaxis = '
             
         plt.title('LTAS')
         plt.legend(meanPlots, legend, loc = 'best', prop=droidLegend)
+        # use different line style
+        # ax.xaxis.grid(True, which = 'Major', linestyle = '-', linewidth = 0.25)
+#         ax.xaxis.grid(True, which = 'Minor', linestyle = '-', linewidth = 0.25)
+#         xfmt = ScalarFormatter(useOffset = False)
+#         ax.xaxis.set_major_formatter(xfmt)
+#         ax.xaxis.set_major_locator(plt.FixedLocator([200,500,1000,3000,5000]))
         plt.show()
     else:
         spectro = []
@@ -799,7 +809,7 @@ def centroidLTAS(meanSpec, fs):
     centroid = CENTROID(meanSpec)
     return round(centroid, 2)
             
-def plotLTAS(meanSpec, stdSpec, style, fs, frameSize, xaxis, plotSD, xlim, ylim):
+def plotLTAS(meanSpec, stdSpec, style, fs, frameSize, xaxis, plotSD, xlim, ylim, fitCoeffs = None, centroid = None):
     freqBins = np.arange(meanSpec.shape[0])*(fs/float(frameSize)/2)
     indexNum = 100
     if xaxis != 'linear' and xaxis != 'log':
@@ -816,7 +826,17 @@ def plotLTAS(meanSpec, stdSpec, style, fs, frameSize, xaxis, plotSD, xlim, ylim)
         step = round(200 / (fs/float(frameSize)/2))
         meanPlot = plt.errorbar(freqBins[index], meanSpec[index], yerr = stdSpec[index], fmt = style)
     else:
-        meanPlot = plt.plot(freqBins, meanSpec, style)  
+        meanPlot = plt.plot(freqBins, meanSpec, style)
+
+# ---- plot slope 
+        # if fitCoeffs != None:
+#         estYVals = freqBins*fitCoeffs[0] + fitCoeffs[1]
+#         fitPlot = plt.plot(freqBins, estYVals, style)  
+
+# ----- plot centroid vertical
+    # if centroid != None:
+#         plt.axvline(centroid, color = style[0], linestyle = style[1], linewidth = 4)
+#         plt.text(centroid, 1.5, str(int(centroid)), fontsize = labelFontsize, color = style[0])
         
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Amplitude (dB)')

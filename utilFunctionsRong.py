@@ -84,6 +84,24 @@ def readMelodiaPitch(inputFile):
             
     return (timeStamps, pitch, newPoints)
 
+def readYileSegmentation(inputFile):
+    '''read Yile's segmentation file'''
+    inFile = open(inputFile, 'r')
+    
+    startTime = []
+    dur = []
+    segNum = []
+    segMarker = []
+    
+    for line in inFile:
+        fields = line.split()
+        if len(fields) == 4:
+            startTime.append(float(fields[0]))
+            dur.append(float(fields[2]))
+            segNum.append(int(fields[1]))
+            segMarker.append(fields[3])
+    return (startTime, dur, segNum, segMarker)
+
 def hz2cents(hz, tuning):
     '''convert Hz to cents
     input: float num in Hz
@@ -109,6 +127,21 @@ def lpcEnvelope(audioSamples, npts, order):
     lpcCoeffs = lpc(audioSamples)
     frequencyResponse = fft(lpcCoeffs[0], npts) 
     return frequencyResponse[:npts/2]
+
+def spectralSlope(spec,frameSize,fs,xlim):
+    startHz = xlim[0]
+    endHz = xlim[1]
+    freqRes = fs/float(frameSize)/2
+    startP = np.round(startHz/freqRes)
+    endP = np.round(endHz/freqRes)
+    
+    freqBins = np.arange(spec.shape[0])*freqRes
+    xvals = freqBins[startP:endP]
+    yvals = spec[startP:endP]
+    
+    a, b = np.polyfit(xvals, yvals, 1)
+    # a is slope
+    return (a, b)
     
 class UnicodeWriter:
     """

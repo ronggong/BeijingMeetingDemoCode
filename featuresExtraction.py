@@ -198,8 +198,8 @@ class FeaturesExtractionSyllable(FeaturesExtraction):
         self.syllableStd = syllableStd
         print self.feature + ' syllable level calculation done, return ' \
         + str(len(self.syllableMean)) + ' values.\n'
-        print 'syllable level mean features value: ', syllableMean
-        print 'syllable level std features value: ', syllableStd, '\n'
+        # print 'syllable level mean features value: ', syllableMean
+        # print 'syllable level std features value: ', syllableStd, '\n'
         
         #return a dictionary
         return (syllableMean, syllableStd)
@@ -232,11 +232,17 @@ class FeaturesExtractionSyllable(FeaturesExtraction):
             UFR.autolabelBar(barGraph, ax)
         plt.legend((self.syllableMrk[0],), prop=droidLegend)
         
-def plotFeatureSyllable(filename, syllableFilename = None, feature = 'speccentroid'):
+def plotFeatureSyllable(filename, syllableFilename = None, pitchtrackFilename = None, textOffsetX = 1.5,feature = 'speccentroid'):
+    if pitchtrackFilename != None:
+        print 'The hopSize is going to be defined as 128. Please make sure that is the hopsize that you used for the pitch track.'
+        hopSize = 128
+    else: 
+        hopSize = 256
+    
     if syllableFilename != None:
-        obj = FeaturesExtractionSyllable(filename, syllableFilename)
+        obj = FeaturesExtractionSyllable(filename, syllableFilename, hopSize = hopSize)
     else:
-        obj = FeaturesExtraction(filename)
+        obj = FeaturesExtraction(filename, hopSize = hopSize)
         
     availableFeatures = obj.getFeatures()
     
@@ -265,31 +271,82 @@ def plotFeatureSyllable(filename, syllableFilename = None, feature = 'speccentro
     else:
         syllableVecs = (featureVec, )
     
-    for ii in range(len(syllableVecs)):
-        sylVec = syllableVecs[ii]
-        fig, ax = plt.subplots()
-        sylVec = np.array(sylVec)
-        timeStamps = np.arange(sylVec.size)*hopSize/float(fs)   
+    if pitchtrackFilename == None: 
+        for ii in range(len(syllableVecs)):
+            sylVec = syllableVecs[ii]
+            fig, ax = plt.subplots()
+            sylVec = np.array(sylVec)
+            timeStamps = np.arange(sylVec.size)*hopSize/float(fs)   
                                   
-        plt.plot(timeStamps,sylVec)
+            plt.plot(timeStamps,sylVec)
         
-        meanValue = np.mean(UFR.vecRejectZero(sylVec))
-        stdValue = np.std(UFR.vecRejectZero(sylVec))
-        cvValue = stdValue/meanValue
+            meanValue = np.mean(UFR.vecRejectZero(sylVec))
+            stdValue = np.std(UFR.vecRejectZero(sylVec))
+            cvValue = stdValue/meanValue
+            if syllableFilename != None:
+                title = feature + ' ' + xticklabels[ii] + ' mean: ' + '%.3f'%round(meanValue,3) \
+                        + ' standard deviation: ' + '%.3f'%round(stdValue,3)
+            else:
+                title = feature + ' mean: ' + '%.3f'%round(meanValue,3) \
+                        + ' standard deviation: ' + '%.3f'%round(stdValue,3)
+        
+            plt.title(title, fontproperties=droidTitle)
+            plt.xlabel('Time (s)')
+            plt.ylabel(ylabel)
+            plt.autoscale(tight=True)
+            plt.show()
+        
+    else:
+        rtuple = UFR.readMelodiaPitch(pitchtrackFilename)
+        timeStampsPitch = rtuple[0]
+        pitch = rtuple[1]
+        
         if syllableFilename != None:
-            title = feature + ' ' + xticklabels[ii] + ' mean: ' + '%.3f'%round(meanValue,3) \
-                    + ' standard deviation: ' + '%.3f'%round(stdValue,3)
+            tStart = obj.getStartTime()
+            tEnd = obj.getEndTime()
         else:
-            title = feature + ' mean: ' + '%.3f'%round(meanValue,3) \
-                    + ' standard deviation: ' + '%.3f'%round(stdValue,3)
+            tStart = [0] # tStart is not important here
+            fStart = 0
+            fEnd = len(pitch)
+                
+        max_yticks = 4
+        linewidth = 2
         
-        plt.title(title, fontproperties=droidTitle)
-        plt.xlabel('Time (s)')
-        plt.ylabel(ylabel)
-        plt.autoscale(tight=True)
-    plt.show()
+        for ii in range(len(tStart)):
+            if syllableFilename != None:
+                fStart = UFR.findMinDisFrameNum(tStart[ii], len(pitch), hopSize, fs)
+                fEnd = UFR.findMinDisFrameNum(tEnd[ii], len(pitch), hopSize, fs)
+                plotOffset = tStart[ii]
+            else:
+                plotOffset = 0
+            
+            sylVec = syllableVecs[ii]
+            sylVec = np.array(sylVec)
+            stdValue = np.std(sylVec)
+            timeStamps = np.arange(sylVec.size)*hopSize/float(fs) + plotOffset
+        
+            if 'xticklabels' in locals():
+                text = xticklabels[ii] + ' SD=' + str(np.round(stdValue,3))
+            else:
+                text = 'SD=' + str(np.round(stdValue,3))
 
-    
+            text_xpos = (timeStamps[-1] - textOffsetX)
+            text_ypos = ((np.max(sylVec) - np.min(sylVec)) * 0.9)
+        
+            fig, ax = plt.subplots(2, sharex=True)
+            ax[0].plot(timeStamps,sylVec, linewidth = linewidth)
+            # ax[0].text(text_xpos, text_ypos, text, fontproperties = droidLegend)
+            ax[0].set_ylabel(ylabel)
+            ax[0].autoscale(tight=True)
+            ax[0].set_title(text, fontproperties=droidTitle)
+
+            ax[1].plot(timeStampsPitch[fStart:fEnd], pitch[fStart:fEnd], linewidth = linewidth)
+            ax[1].autoscale(tight=True)
+            ax[1].set_ylabel('Freq (Hz)')
+            fig.tight_layout()
+            plt.xlabel('Time (s)')
+            plt.show()
+        
 def compareFeaturesSyllableMean(filenames, syllableFilenames, feature = 'speccentroid'):
     if type(filenames) == str:
         filenames = (filenames, )
@@ -566,6 +623,8 @@ def compareLTAS(filenames, syllableFilenames = None, singerName = None,xaxis = '
             specDB = 20*np.log10(spec+eps)
             
             meanSpec = spec.mean(0)
+            centroid = (centroidLTAS(meanSpec, fs))
+            
             meanSpecDB = 20 * np.log10(meanSpec+eps)
             meanSpecDB = meanSpecDB - max(meanSpecDB)
             
@@ -585,7 +644,7 @@ def compareLTAS(filenames, syllableFilenames = None, singerName = None,xaxis = '
                 print 'singerName contains less singers than the file number.'
                 return
                 
-            legend.append(singerString)
+            legend.append(singerString + ' Cen:' + str(centroid))
             singer = singer + 1
             
         plt.title('LTAS')
@@ -663,6 +722,10 @@ def compareLTAS(filenames, syllableFilenames = None, singerName = None,xaxis = '
                 plt.legend(meanPlots, legendObjs, loc = 'best', prop=droidLegend)
         plt.show()
         
+def centroidLTAS(meanSpec, fs):
+    CENTROID = ess.Centroid(range=fs/2.0)
+    centroid = CENTROID(meanSpec)
+    return round(centroid, 2)
             
 def plotLTAS(meanSpec, stdSpec, style, fs, frameSize, xaxis, plotSD, xlim, ylim):
     freqBins = np.arange(meanSpec.shape[0])*(fs/float(frameSize)/2)

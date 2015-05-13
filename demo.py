@@ -132,7 +132,23 @@ syllableFilename = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section-words-m
 plotFeatureSyllable(filename, syllableFilename, feature = 'speccentroid')
 
 ###################################
-# 6. -----plot features of an audio
+# 6. -----plot features and pitchtrack
+from featuresExtraction import *
+
+# wav file
+filename = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section_harmonics_pitchtrackCorrected.wav'
+
+# syllable markers
+syllableFilename = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section-words-mrkRearrange.txt'
+
+# pitchtrack
+pitchtrack = 'daxp-Yu tang chun-Su San qi jie (Chi Xiaoqiiu)-section-words-pitchTrack.txt'
+
+# one file, feature could be speccentroid or specloudness or specflux
+plotFeatureSyllable(filename, syllableFilename = syllableFilename, pitchtrackFilename = pitchtrack,feature = 'speccentroid')
+
+###################################
+# 7. -----plot features of an audio
 from featuresExtraction import *
 
 filename1 = 'daxp-Yu tang chun-Su San qi jie (Li Shengsu)-section_harmonics_pitchtrackCorrected.wav'

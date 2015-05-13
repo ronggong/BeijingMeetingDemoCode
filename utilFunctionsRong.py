@@ -33,12 +33,12 @@ def stdValueRejectZero(vec, startFrameNum, endFrameNum):
     out = vecRejectZero(vec)
     return np.std(out)
 
-def vecRejectZero(vec, vecRef = []):
+def vecRejectValue(vec, vecRef = [], threshold = 0):
     out = []
     if len(vecRef) == 0:
         vecRef = vec
     for e in range(len(vecRef)):
-        if vecRef[e] != 0:
+        if vecRef[e] > threshold:
             out.append(vec[e])
     return out
     

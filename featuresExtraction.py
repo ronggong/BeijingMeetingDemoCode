@@ -27,7 +27,7 @@ class FeaturesExtraction(object):
     '''abstract class'''
     
     def __init__(self, filename, fs = 44100, frameSize = 2048, hopSize = 256):
-        self.features = ['speccentroid', 'specloudness', 'specflux']
+        self.features = ['speccentroid', 'specloudness', 'specflux', 'tristimulus']
         self.feature = None
         self.frameSize = frameSize
         self.hopSize = hopSize
@@ -92,28 +92,52 @@ class FeaturesExtraction(object):
         elif feature == self.features[2]:
             loudnessObject = ess.Loudness()
             featureObject = ess.Flux()
+        elif feature == self.features[3]:
+            PEAKS = ess.SpectralPeaks(sampleRate = self.fs)
+            HPEAKS = ess.HarmonicPeaks()
+            TRIST = ess.Tristimulus()
+            PITCH = ess.PitchYinFFT(minFrequency = 50, maxFrequency = 1000, sampleRate = self.fs)
         
         print 'extracting feature: ', feature
         
-        if normTo > 0:
-            # when Extract Flux feature, normalize loudness
-            if feature == self.features[2]:
-                for s in self.mX:               
-                    out.append(loudnessObject(s))
-            else:
-                for s in self.mX:               
-                    out.append(featureObject(s))
-            
-            # if feature is loudness normalize
-            if feature == self.features[1] or feature == self.features[2]:
-                meanLoud = np.mean(UFR.vecRejectZero(np.array(out)))
-                normCoeff = pow(normTo/meanLoud, 1/0.67/2.0)
-                out = []
-                for s in self.mX:
-                    out.append(featureObject(s * normCoeff))
-        else:
+        if feature == self.features[3]:
+        # to plot the tristimulus
             for s in self.mX:
-                out.append(featureObject(s))
+                peaksFreq, peaksMag = PEAKS(s)
+                if len(peaksFreq) == 0:
+                    trist = np.array([0,0,0])
+                else:
+                    if peaksFreq[0] == 0:
+                        peaksFreq = peaksFreq[1:]
+                        peaksMag = peaksMag[1:]
+                    pitch, confidence = PITCH(s)
+                    #print 'pitch: ', pitch, confidence
+                    if confidence > 0.7:
+                        hpeaksFreq, hpeaksMag = HPEAKS(peaksFreq, peaksMag, pitch)
+                        trist = TRIST(hpeaksFreq, hpeaksMag)
+                    else:
+                        trist = np.array([0,0,0])
+                out.append(trist)
+        else:
+            if normTo > 0:
+                # when Extract Flux feature, normalize loudness
+                if feature == self.features[2]:
+                    for s in self.mX:               
+                        out.append(loudnessObject(s))
+                else:
+                    for s in self.mX:               
+                        out.append(featureObject(s))
+            
+                # if feature is loudness normalize
+                if feature == self.features[1] or feature == self.features[2]:
+                    meanLoud = np.mean(UFR.vecRejectZero(np.array(out)))
+                    normCoeff = pow(normTo/meanLoud, 1/0.67/2.0)
+                    out = []
+                    for s in self.mX:
+                        out.append(featureObject(s * normCoeff))
+            else:
+                for s in self.mX:
+                    out.append(featureObject(s))
                 
         self.featureVec = out
         print feature + ' calculation done, return ' + str(len(self.featureVec)) + ' values.\n'
@@ -131,15 +155,53 @@ class FeaturesExtraction(object):
             ylabel = 'Norm Loudness'
         elif self.feature == self.features[2]:
             ylabel = 'Flux'
+        elif self.feature == self.features[3]:
+            ylabel = 'Trist'
+            trist0 = []
+            trist1 = []
+            trist2 = []
+            for item in self.featureVec:
+                trist0.append(item[0])
+                trist1.append(item[1])
+                trist2.append(item[2])
+        
+        if self.feature == self.features[3]:
+            trist0 = np.array(trist0)
+            trist1 = np.array(trist1)
+            trist2 = np.array(trist2)
+            timeStamps = np.arange(trist0.size)*self.hopSize/float(self.fs)     
+
+            t0Plt = plt.plot(timeStamps, trist0)
+            t1Plt = plt.plot(timeStamps, trist1)
+            t2Plt = plt.plot(timeStamps, trist2)
+            meant0 = np.mean(UFR.vecRejectValue(trist0, threshold = 0))
+            meant1 = np.mean(UFR.vecRejectValue(trist1, threshold = 0))
+            meant2 = np.mean(UFR.vecRejectValue(trist2, threshold = 0))
+            stdt0 = np.std(UFR.vecRejectValue(trist0, threshold = 0))
+            stdt1 = np.std(UFR.vecRejectValue(trist1, threshold = 0))
+            stdt2 = np.std(UFR.vecRejectValue(trist2, threshold = 0))
             
-        featureVec = np.array(self.featureVec)
-        timeStamps = np.arange(featureVec.size)*self.hopSize/float(self.fs)                             
-        plt.plot(timeStamps,featureVec)
-        meanValue = np.mean(UFR.vecRejectZero(featureVec))
-        stdValue = np.std(UFR.vecRejectZero(featureVec))
-        cvValue = stdValue/meanValue
-        title = self.feature + ' mean: ' + '%.3f'%round(meanValue,3) \
-                + ' standard deviation: ' + '%.3f'%round(stdValue,3)
+            sumMean = meant0 + meant1 + meant2
+            # normalised mean
+            nmt0 = meant0/sumMean
+            nmt1 = meant1/sumMean
+            nmt2 = meant2/sumMean
+            title = self.feature
+            
+            legend0 = 't0 mean:'+str(round(meant0,2))+ ' norm mean:' + str(round(nmt0,2)) + ' std:'+str(round(stdt0,2))
+            legend1 = 't1 mean:'+str(round(meant1,2))+ ' norm mean:' + str(round(nmt1,2)) + ' std:'+str(round(stdt1,2))
+            legend2 = 't2 mean:'+str(round(meant2,2))+ ' norm mean:' + str(round(nmt2,2)) + ' std:'+str(round(stdt2,2))
+
+            plt.legend((t0Plt[0], t1Plt[0], t2Plt[0]), (legend0, legend1, legend2))
+        else:
+            featureVec = np.array(self.featureVec)
+            timeStamps = np.arange(featureVec.size)*self.hopSize/float(self.fs)                             
+            plt.plot(timeStamps,featureVec)
+            meanValue = np.mean(UFR.vecRejectZero(featureVec))
+            stdValue = np.std(UFR.vecRejectZero(featureVec))
+            cvValue = stdValue/meanValue
+            title = self.feature + ' mean: ' + '%.3f'%round(meanValue,3) \
+                    + ' standard deviation: ' + '%.3f'%round(stdValue,3)
         
         plt.title(title)
         plt.xlabel(xlabel)
@@ -214,6 +276,9 @@ class FeaturesExtractionSyllable(FeaturesExtraction):
             ylabel = 'Norm Loudness'
         elif self.feature == self.features[2]:
             ylabel = 'Flux'
+        elif self.feature == self.features[3]:
+            print 'we don''t support the syllable level tristimulus. sorry.'
+            return
         
         syllableNum = len(self.syllableMean)
         ind = np.arange(syllableNum)
@@ -248,6 +313,9 @@ def plotFeatureSyllable(filename, syllableFilename = None, pitchtrackFilename = 
     
     if feature not in availableFeatures:
         print 'the argument feature should be one of ', availableFeatures
+        return
+    if feature == 'tristimulus':
+        print 'we don''t support the syllable level tristimulus right now, sorry.'
         return
     
     obj.spectrogram()
@@ -362,6 +430,10 @@ def compareFeaturesSyllableMean(filenames, syllableFilenames, feature = 'speccen
         "recorded differently. Because the recording environment, the use of recording " +
         "mixing technique (the use of compressor, expander or other dynamic control" + 
         " in music post production) are different.")
+        
+    if feature == 'tristimulus':
+        print 'we can''t compare tristimulus right now, sorry.'
+        return
         
     obj = FeaturesExtractionSyllable(filenames[0], syllableFilenames[0])
     availableFeatures = obj.getFeatures()
@@ -644,7 +716,7 @@ def compareLTAS(filenames, syllableFilenames = None, singerName = None,xaxis = '
                 print 'singerName contains less singers than the file number.'
                 return
                 
-            legend.append(singerString + ' Cen:' + str(centroid))
+            legend.append(singerString + ' Centroid: ' + str(centroid))
             singer = singer + 1
             
         plt.title('LTAS')

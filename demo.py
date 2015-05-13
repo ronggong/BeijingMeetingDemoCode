@@ -177,6 +177,12 @@ test1.extractFeature('specflux', normTo = 0.5)
 plt.figure(2)
 test1.plotFeature()
 
+# tristimulus
+text1.extractFeature('tristimulus')
+
+plt.figure(3)
+test1.plotFeature()
+
 plt.show()
 
 

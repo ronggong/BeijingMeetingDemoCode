@@ -185,4 +185,16 @@ test1.plotFeature()
 
 plt.show()
 
+###################################
+# 8. -----tonic (first degree) identification
+import tonic
+from os import listdir
+from os.path import isfile, join
+
+audioFilename = './tonic/01 九江口：看夕阳照枫林红似血染.mp3'
+segFilename = './tonic/01 九江口：看夕阳照枫林红似血染.txt'
+
+# shengqiang: 'erhuang' or 'xipi'
+tonic.neiWaiZhu(audioFilename, segFilename, shengqiang = 'erhuang', plotHisto = True)
+
 

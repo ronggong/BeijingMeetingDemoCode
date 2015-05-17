@@ -113,6 +113,39 @@ def hz2cents(hz, tuning):
     if math.isinf(cents):
         cents = -1.0e+04
     return cents
+
+def hz2centsRafa(timeVec, pitchInHz, tonic=261.626, plotHisto = False):
+
+    # with open(document, 'r') as f:
+#         data = f.readlines()
+# 
+#     data2 = []
+#     for i in range(len(data)):
+#         x = []
+#         time = float(data[i].split('\t')[0])
+#         x.append(time)
+#         value = float(data[i].split('\t')[1].rstrip('\r\n'))
+#         x.append(value)
+#         data2.append(x)
+
+    cents = [-10000]*len(pitchInHz)
+    for i in xrange(len(pitchInHz)):
+        if pitchInHz[i] > 0:
+            cents[i] = 1200*np.log2(1.0*pitchInHz[i]/tonic)
+    data = zip(timeVec, cents)
+    data_hist = np.array(data)
+
+    pitch_obj = intonation.Pitch(data_hist[:, 0], data_hist[:, 1])
+    #print data_hist[:,0], data_hist[:,1]
+    rec_obj = intonation.Recording(pitch_obj)
+    rec_obj.compute_hist()
+    
+    if plotHisto == True:
+        rec_obj.histogram.plot()
+        
+    rec_obj.histogram.get_peaks()
+    peaks = rec_obj.histogram.peaks
+    return peaks['peaks']
     
 def autolabelBar(rects, ax):
     # attach some text labels

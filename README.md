@@ -16,9 +16,9 @@ download also font folder which contains the font used in plot
 numpy  
 scipy  
 matplotlib
-cython
-intonation (tonic)
-pypeaks (tonic)
+cython  
+intonation (tonic)  
+pypeaks (tonic)  
 
 essentia:https://github.com/MTG/essentia
 
@@ -30,7 +30,7 @@ pypeaks:https://github.com/gopalkoduri/pypeaks
 
 1. if you meet "cython compile" problem, please delete build folder and utilFunctions_C.so file in sms-models directory, then re-compile utilFunctions according to method:  
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;go to the directory /sms-models/utilFunctions_C and type:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;go to the directory /sms-models/utilFunctions_C and type:
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$ python compileModule.py build_ext --inplace 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$ python compileModule.py build_ext --inplace 
 

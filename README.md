@@ -20,21 +20,17 @@ cython
 intonation (tonic)
 pypeaks (tonic)
 
-essentia:  
-https://github.com/MTG/essentia
+essentia:https://github.com/MTG/essentia
 
-sms-tools:  
-https://github.com/MTG/sms-tools  
+sms-tools:https://github.com/MTG/sms-tools  
 
-intonation:
-https://github.com/gopalkoduri/intonation
+intonation:https://github.com/gopalkoduri/intonation
 
-pypeaks:
-https://github.com/gopalkoduri/pypeaks
+pypeaks:https://github.com/gopalkoduri/pypeaks
 
 1. if you meet "cython compile" problem, please delete build folder and utilFunctions_C.so file in sms-models directory, then re-compile utilFunctions according to method:  
 
-go to the directory /sms-models/utilFunctions_C and type:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;go to the directory /sms-models/utilFunctions_C and type:
 
-$ python compileModule.py build_ext --inplace 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$ python compileModule.py build_ext --inplace 
 
